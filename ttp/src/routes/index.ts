@@ -1,0 +1,296 @@
+/**
+ * TTP API routes
+ * Implements POST /register, /authenticate, /session-key endpoints
+ */
+
+import { logInfo, logSuccess, logWarn, logError } from "../logs";
+import { RegistryData, registerEntity, getEntity } from "../registry";
+import { RegisterRequest, AuthenticateRequest, SessionKeyRequest } from "./types";
+
+/**
+ * Handle POST /register requests
+ * Request body: { id, type, name, publicKey }
+ */
+export async function handleRegister(
+  request: Request,
+  registry: RegistryData
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as RegisterRequest;
+    const { id, type, name, publicKey } = body;
+
+    // Validate request
+    if (!id || !type || !name || !publicKey) {
+      logWarn("REQUEST_INVALID", {
+        message: "Registration request missing required fields",
+        entityId: id,
+      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Missing required fields: id, type, name, publicKey",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!["CLIENT", "SERVER"].includes(type)) {
+      logWarn("REQUEST_INVALID", {
+        message: `Invalid entity type: ${type}`,
+        entityId: id,
+      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Invalid type. Must be CLIENT or SERVER",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logInfo("REQUEST_RECEIVED", {
+      entityId: id,
+      entityType: type,
+      message: `Registration request from ${type}`,
+    });
+
+    // Register entity
+    const registered = registerEntity(registry, {
+      id,
+      type: type as "CLIENT" | "SERVER",
+      name,
+      publicKey,
+      registeredAt: new Date().toISOString(),
+    });
+
+    if (registered) {
+      logSuccess("SERVER_REGISTERED" as any, {
+        entityId: id,
+        entityType: type,
+        message: `${type} registered successfully`,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `${type} registered successfully`,
+          entityId: id,
+        }),
+        { status: 201, headers: { "Content-Type": "application/json" } }
+      );
+    } else {
+      logWarn("REQUEST_INVALID", {
+        entityId: id,
+        message: `${type} already registered`,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Entity already registered",
+        }),
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logError("ERROR", {
+      message: `Registration handler error: ${message}`,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Internal server error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+
+/**
+ * Handle POST /authenticate requests
+ * Request body: { clientId, serverId, clientCertificate }
+ */
+export async function handleAuthenticate(
+  request: Request,
+  registry: RegistryData
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as AuthenticateRequest;
+    const { clientId, serverId, clientCertificate } = body;
+
+    // Validate request
+    if (!clientId || !serverId) {
+      logWarn("REQUEST_INVALID", {
+        message: "Authentication request missing required fields",
+        details: { clientId, serverId },
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Missing required fields: clientId, serverId",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logInfo("AUTH_ATTEMPT", {
+      entityId: clientId,
+      entityType: "CLIENT",
+      message: `Authentication attempt for client ${clientId}`,
+      details: { serverId },
+    });
+
+    // Check if client and server exist
+    const client = getEntity(registry, clientId);
+    const server = getEntity(registry, serverId);
+
+    if (!client) {
+      logWarn("AUTH_FAILED", {
+        entityId: clientId,
+        message: "Client not found",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Client not found",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!server) {
+      logWarn("AUTH_FAILED", {
+        entityId: serverId,
+        entityType: "SERVER",
+        message: "Server not found",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Server not found",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logSuccess("AUTH_SUCCESS", {
+      entityId: clientId,
+      entityType: "CLIENT",
+      message: `Authentication successful for ${clientId}`,
+      details: { serverId },
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Authentication successful",
+        clientId,
+        serverId,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logError("ERROR", {
+      message: `Authentication handler error: ${message}`,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Internal server error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+
+/**
+ * Handle POST /session-key requests
+ * Request body: { clientId, serverId }
+ * Note: Will return encrypted session keys once crypto is implemented
+ */
+export async function handleSessionKey(
+  request: Request,
+  registry: RegistryData
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as SessionKeyRequest;
+    const { clientId, serverId } = body;
+
+    // Validate request
+    if (!clientId || !serverId) {
+      logWarn("REQUEST_INVALID", {
+        message: "Session key request missing required fields",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Missing required fields: clientId, serverId",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logInfo("REQUEST_RECEIVED", {
+      message: "Session key generation request",
+      details: { clientId, serverId },
+    });
+
+    // Check if both entities exist
+    const client = getEntity(registry, clientId);
+    const server = getEntity(registry, serverId);
+
+    if (!client || !server) {
+      logWarn("AUTH_FAILED", {
+        message: "Client or server not found for session key generation",
+        details: { clientId, serverId },
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Client or server not found",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // TODO: Generate session key using crypto utilities
+    // TODO: Encrypt session key with client and server public keys
+    logInfo("SESSION_KEY_GENERATED", {
+      message: "Session key generated (TODO: implement encryption)",
+      details: { clientId, serverId },
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Session key generation request accepted",
+        clientId,
+        serverId,
+        // TODO: Add encrypted session keys for client and server
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logError("ERROR", {
+      message: `Session key handler error: ${message}`,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Internal server error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
