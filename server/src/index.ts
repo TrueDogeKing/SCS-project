@@ -4,7 +4,7 @@
  */
 
 import { logInfo } from "./logs";
-import { handleServiceRequest, handleVerify } from "./routes";
+import { handleServiceRequest, handleVerifyClient } from "./routes";
 
 const PORT = 3001;
 
@@ -27,9 +27,9 @@ const server = Bun.serve({
       return handleServiceRequest(request);
     }
 
-    // POST /verify - Server verifies client with TTP
-    if (url.pathname === "/verify" && request.method === "POST") {
-      return handleVerify(request);
+    // POST /verify-client - Server verifies client
+    if (url.pathname === "/verify-client" && request.method === "POST") {
+      return handleVerifyClient(request);
     }
 
     return new Response("Not Found", { status: 404 });

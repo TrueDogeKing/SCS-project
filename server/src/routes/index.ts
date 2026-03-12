@@ -1,10 +1,15 @@
 /**
  * Server API routes
- * Implements POST /service-request and POST /verify endpoints
+ * Implements POST /service-request and POST /verify-client endpoints
  */
 
 import { logInfo, logWarn, logError, logSuccess } from "../logs";
 import { ServiceRequestBody, VerifyRequestBody } from "./types";
+import {
+  verifyClientCertificate,
+  authorizeServiceAccess,
+  authenticateWithTTP,
+} from "../auth";
 
 /**
  * Handle POST /service-request requests
@@ -37,17 +42,55 @@ export async function handleServiceRequest(request: Request): Promise<Response> 
       details: { serviceType },
     });
 
-    // TODO: Verify session key and decrypt clientCertificate
-    // TODO: Send verification request to TTP
+    // Verify client certificate
+    const certVerification = await verifyClientCertificate(clientId, clientCertificate);
+    if (!certVerification.success) {
+      logWarn("REQUEST_INVALID", {
+        clientId,
+        message: "Certificate verification failed",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Certificate verification failed",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Authorize service access
+    const authResult = await authorizeServiceAccess(clientId, serviceType);
+    if (!authResult.success) {
+      logWarn("REQUEST_INVALID", {
+        clientId,
+        message: "Service authorization failed",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Service authorization failed",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logSuccess("SERVICE_REQUEST" as any, {
+      clientId,
+      message: `Service request authorized`,
+      details: { serviceType },
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Service request received and queued for verification",
+        message: "Service request authorized",
         clientId,
-        status: "PENDING_VERIFICATION",
+        serviceType,
+        status: "AUTHORIZED",
       }),
-      { status: 202, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -66,10 +109,10 @@ export async function handleServiceRequest(request: Request): Promise<Response> 
 }
 
 /**
- * Handle POST /verify requests
+ * Handle POST /verify-client requests
  * Request body: { clientId, clientCertificate, sessionId }
  */
-export async function handleVerify(request: Request): Promise<Response> {
+export async function handleVerifyClient(request: Request): Promise<Response> {
   try {
     const body = (await request.json()) as VerifyRequestBody;
     const { clientId, clientCertificate, sessionId } = body;
@@ -92,17 +135,47 @@ export async function handleVerify(request: Request): Promise<Response> {
 
     logInfo("VERIFY_REQUEST", {
       clientId,
-      message: "Client verification request to TTP",
+      message: "Client verification request",
       details: sessionId ? { sessionId } : undefined,
     });
 
-    // TODO: Forward request to TTP
-    // TODO: Receive verification response from TTP
-    // TODO: Extract session key from TTP response
+    // Verify client certificate
+    const certVerification = await verifyClientCertificate(clientId, clientCertificate);
+    if (!certVerification.success) {
+      logWarn("VERIFICATION_FAILED", {
+        clientId,
+        message: "Certificate verification failed",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Certificate verification failed",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Authenticate with TTP
+    const authResult = await authenticateWithTTP(clientId, "server_id", clientCertificate);
+    if (!authResult.success) {
+      logWarn("VERIFICATION_FAILED", {
+        clientId,
+        message: "TTP authentication failed",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Authentication failed",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     logSuccess("VERIFICATION_SUCCESS", {
       clientId,
-      message: "Client verified successfully (TODO: implement TTP integration)",
+      message: "Client verification successful",
     });
 
     return new Response(
@@ -111,6 +184,7 @@ export async function handleVerify(request: Request): Promise<Response> {
         message: "Client verification successful",
         clientId,
         verified: true,
+        sessionKey: authResult.sessionKey,
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
