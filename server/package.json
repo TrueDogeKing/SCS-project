@@ -7,7 +7,6 @@
     "scripts": {
         "dev": "bun run src/index.ts",
         "build": "tsc",
-        "start": "node dist/index.js",
         "test:crypto": "bun run src/crypto/test.ts",
         "test:api": "bun run tests/api.test.ts"
     },

@@ -2,11 +2,11 @@
  * Message handlers for encrypted client-server communication
  */
 
-import { logInfo, logWarn, logError, logSuccess } from "../logs";
-import { SendMessageBody, ReceiveMessageBody, SendMessageResponse, ReceiveMessageResponse } from "./types";
-import { getSession, createSession, updateSessionActivity } from "../session";
-import { decryptMessage, encryptMessage, isValidEncryptedMessage } from "../session/messaging";
-import { EncryptedMessage, DecryptedMessage } from "../session/types";
+import { logInfo, logWarn, logError, logSuccess } from "../logs/index.js";
+import { SendMessageBody, ReceiveMessageBody, SendMessageResponse, ReceiveMessageResponse } from "./types.js";
+import { getSession, createSession, updateSessionActivity } from "../session/index.js";
+import { decryptMessage, encryptMessage, isValidEncryptedMessage } from "../session/messaging.js";
+import { EncryptedMessage, DecryptedMessage } from "../session/types.js";
 
 // In-memory message queue (in production, use a database)
 // Key: "clientId:serverId" -> array of messages

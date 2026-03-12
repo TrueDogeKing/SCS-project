@@ -4,7 +4,7 @@
  */
 
 // Type definitions
-export * from "./types";
+export * from "./types.js";
 
 // RSA utilities
 export {
@@ -12,7 +12,7 @@ export {
   encryptWithRSAPublicKey,
   decryptWithRSAPrivateKey,
   decryptWithRSAPrivateKeyAsString,
-} from "./rsa";
+} from "./rsa.js";
 
 // AES utilities
 export {
@@ -20,7 +20,7 @@ export {
   decryptAES256,
   decryptAES256AsString,
   isValidAES256Key,
-} from "./aes";
+} from "./aes.js";
 
 // SHA-256 utilities
 export {
@@ -29,7 +29,7 @@ export {
   hashSHA256Base64,
   generateSHA256ID,
   verifySHA256,
-} from "./hash";
+} from "./hash.js";
 
 // Random utilities
 export {
@@ -39,4 +39,4 @@ export {
   generateIV,
   generateRandomHex,
   generateSecureToken,
-} from "./random";
+} from "./random.js";

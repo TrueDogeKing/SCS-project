@@ -4,7 +4,7 @@
  */
 
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
-import { EncryptedData } from "./types";
+import { EncryptedData } from "./types.js";
 
 const ALGORITHM = "aes-256-gcm";
 const KEY_SIZE = 32; // 256 bits

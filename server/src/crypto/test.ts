@@ -14,7 +14,7 @@ import {
   generateSessionKey,
   generateSecureToken,
   generateNonce,
-} from "./index";
+} from "./index.js";
 
 console.log("\n=== SCS Crypto Utilities Test ===\n");
 

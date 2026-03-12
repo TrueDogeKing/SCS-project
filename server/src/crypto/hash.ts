@@ -4,7 +4,7 @@
  */
 
 import { createHash } from "crypto";
-import { HashResult } from "./types";
+import { HashResult } from "./types.js";
 
 export function hashSHA256(data: string | Buffer): HashResult {
   const buffer = typeof data === "string" ? Buffer.from(data, "utf-8") : data;

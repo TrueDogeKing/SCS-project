@@ -3,8 +3,8 @@
  * Generates and stores the server's RSA 4096-bit keypair
  */
 
-import { generateRSAKeyPair } from "./crypto";
-import { logInfo } from "./logs";
+import { generateRSAKeyPair } from "./crypto/index.js";
+import { logInfo } from "./logs/index.js";
 
 const serverKeys = generateRSAKeyPair();
 

@@ -2,7 +2,7 @@
  * Server API request/response type definitions
  */
 
-import { EncryptedMessage } from "../session/types";
+import { EncryptedMessage } from "../session/types.js";
 
 // Service request endpoint types
 export interface ServiceRequestBody {

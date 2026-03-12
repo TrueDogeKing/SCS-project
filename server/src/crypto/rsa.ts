@@ -4,7 +4,7 @@
  */
 
 import { generateKeyPairSync, publicEncrypt, privateDecrypt } from "crypto";
-import { RSAKeyPair } from "./types";
+import { RSAKeyPair } from "./types.js";
 
 export function generateRSAKeyPair(): RSAKeyPair {
   const { publicKey, privateKey } = generateKeyPairSync("rsa", {

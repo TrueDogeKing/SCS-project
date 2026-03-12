@@ -3,20 +3,20 @@
  * Implements POST /service-request and POST /verify-client endpoints
  */
 
-import { logInfo, logWarn, logError, logSuccess } from "../logs";
-import { ServiceRequestBody, VerifyRequestBody } from "./types";
+import { logInfo, logWarn, logError, logSuccess } from "../logs/index.js";
+import { ServiceRequestBody, VerifyRequestBody } from "./types.js";
 import {
   verifyClientCertificate,
   authorizeServiceAccess,
   requestAuthenticationFromTTP,
   requestSessionKeyFromTTP,
-} from "../auth";
-import { createSession } from "../session";
-import { decryptWithRSAPrivateKeyAsString } from "../crypto";
-import { getServerPrivateKey } from "../keys";
+} from "../auth/index.js";
+import { createSession } from "../session/index.js";
+import { decryptWithRSAPrivateKeyAsString } from "../crypto/index.js";
+import { getServerPrivateKey } from "../keys.js";
 
 // Re-export message handlers
-export { handleSendMessage, handleReceiveMessage, handleSendToClient } from "./messages";
+export { handleSendMessage, handleReceiveMessage, handleSendToClient } from "./messages.js";
 
 /**
  * Handle POST /service-request requests

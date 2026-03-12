@@ -3,8 +3,8 @@
  * Manages active sessions between clients and servers
  */
 
-import { hashSHA256Hex } from "../crypto";
-import { Session } from "./types";
+import { hashSHA256Hex } from "../crypto/index.js";
+import { Session } from "./types.js";
 
 // In-memory session store (in production, use a database)
 const sessions = new Map<string, Session>();

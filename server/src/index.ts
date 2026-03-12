@@ -3,9 +3,9 @@
  * Provides service to authenticated clients
  */
 
-import { logInfo } from "./logs";
-import { handleServiceRequest, handleVerifyClient, handleSendMessage, handleReceiveMessage, handleSendToClient } from "./routes";
-import { getServerPublicKey } from "./keys";
+import { logInfo } from "./logs/index.js";
+import { handleServiceRequest, handleVerifyClient, handleSendMessage, handleReceiveMessage, handleSendToClient } from "./routes/index.js";
+import { getServerPublicKey } from "./keys.js";
 
 const PORT = 3001;
 
