@@ -32,6 +32,7 @@ export function encryptWithRSAPublicKey(publicKey: string, data: string | Buffer
     {
       key: publicKey,
       padding: 4, // RSA_PKCS1_OAEP_PADDING
+      oaepHash: "sha256", // Must match browser Web Crypto API hash
     },
     dataBuffer
   );
@@ -46,6 +47,7 @@ export function decryptWithRSAPrivateKey(privateKey: string, ciphertext: string)
     {
       key: privateKey,
       padding: 4, // RSA_PKCS1_OAEP_PADDING
+      oaepHash: "sha256",
     },
     ciphertextBuffer
   );

@@ -77,7 +77,7 @@ export async function handleRegister(
     }
 
     // Register entity with certificate
-    const registered = registerEntity(registry, {
+    registerEntity(registry, {
       id,
       type: type as "CLIENT" | "SERVER",
       name,
@@ -86,43 +86,28 @@ export async function handleRegister(
       registeredAt: new Date().toISOString(),
     });
 
-    if (registered) {
-      const eventType = type === "CLIENT" ? "CLIENT_REGISTERED" : "SERVER_REGISTERED";
-      logSuccess(eventType as any, {
-        entityId: id,
-        entityType: type,
+    const eventType = type === "CLIENT" ? "CLIENT_REGISTERED" : "SERVER_REGISTERED";
+    logSuccess(eventType, {
+      entityId: id,
+      entityType: type,
+      message: `${type} registered successfully`,
+      details: { certificateFingerprint: certificate.fingerprint.substring(0, 16) },
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
         message: `${type} registered successfully`,
-        details: { certificateFingerprint: certificate.fingerprint.substring(0, 16) },
-      });
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: `${type} registered successfully`,
-          entityId: id,
-          certificate: {
-            pem: certificate.pem,
-            fingerprint: certificate.fingerprint,
-            validFrom: certificate.validFrom,
-            validUntil: certificate.validUntil,
-          },
-        }),
-        { status: 201, headers: { "Content-Type": "application/json" } }
-      );
-    } else {
-      logWarn("REQUEST_INVALID", {
         entityId: id,
-        message: `${type} already registered`,
-      });
-
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Entity already registered",
-        }),
-        { status: 409, headers: { "Content-Type": "application/json" } }
-      );
-    }
+        certificate: {
+          pem: certificate.pem,
+          fingerprint: certificate.fingerprint,
+          validFrom: certificate.validFrom,
+          validUntil: certificate.validUntil,
+        },
+      }),
+      { status: 201, headers: { "Content-Type": "application/json" } }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logError("ERROR", {

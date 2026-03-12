@@ -31,16 +31,13 @@ export function createRegistry(): RegistryData {
 
 /**
  * Register an entity (client or server)
+ * If the entity already exists, its public key and certificate are updated.
  */
 export function registerEntity(
   registry: RegistryData,
   entity: RegisteredEntity
 ): boolean {
   const map = entity.type === "CLIENT" ? registry.clients : registry.servers;
-
-  if (map.has(entity.id)) {
-    return false; // Entity already registered
-  }
 
   map.set(entity.id, entity);
   return true;

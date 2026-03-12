@@ -83,7 +83,7 @@ export async function handleServiceRequest(request: Request): Promise<Response> 
       );
     }
 
-    logSuccess("SERVICE_REQUEST" as any, {
+    logSuccess("SERVICE_REQUEST", {
       clientId,
       message: `Service request authorized`,
       details: { serviceType },

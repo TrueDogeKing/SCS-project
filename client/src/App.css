@@ -1,0 +1,373 @@
+/* ===== Variables ===== */
+:root {
+    --primary: #667eea;
+    --primary-dark: #5568d3;
+    --success: #27ae60;
+    --error: #e74c3c;
+    --warn: #f39c12;
+    --bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --text: #333;
+    --text-muted: #888;
+    --border: #e0e0e0;
+    --font-mono: "Courier New", Consolas, monospace;
+}
+
+/* ===== Reset & Base ===== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+#root {
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    border: none;
+    display: block;
+}
+
+/* ===== App Layout ===== */
+.app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.app-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.app-header h1 {
+    font-size: 28px;
+    color: var(--primary);
+    margin-bottom: 4px;
+    font-weight: 700;
+    letter-spacing: normal;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* ===== Status Bar ===== */
+.status-bar {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.status-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-label {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.status-details {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ===== Grid Layout ===== */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 800px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Panels ===== */
+.panel {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.panel h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: var(--primary);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.panel-header h3 {
+    margin-bottom: 0;
+}
+
+.panel-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+/* ===== Config Panel ===== */
+.config-row {
+    margin-bottom: 12px;
+}
+
+.config-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.config-row input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+}
+
+.config-row input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.config-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* ===== Dots ===== */
+.dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.dot-online {
+    background: var(--success);
+}
+
+.dot-offline {
+    background: var(--error);
+}
+
+.dot-unknown {
+    background: #ccc;
+}
+
+/* ===== Buttons ===== */
+button {
+    cursor: pointer;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    padding: 10px 20px;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-dark);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #f5f5f5;
+    color: var(--text);
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #eee;
+}
+
+.btn-small {
+    background: none;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-small:hover {
+    color: var(--text);
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* ===== Log Panel ===== */
+.log-container {
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 6px 8px;
+    border-left: 3px solid #ccc;
+    margin-bottom: 2px;
+    background: #fafafa;
+    border-radius: 0 4px 4px 0;
+}
+
+.log-icon {
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.log-time {
+    color: #aaa;
+    flex-shrink: 0;
+}
+
+.log-msg {
+    word-break: break-word;
+}
+
+.log-empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 30px 0;
+    font-size: 13px;
+}
+
+/* ===== Messaging Panel ===== */
+.messages-container {
+    min-height: 200px;
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #fafafa;
+}
+
+.messages-empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 60px 0;
+    font-size: 13px;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.message-sent {
+    background: var(--primary);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 2px;
+}
+
+.message-received {
+    background: white;
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 2px;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.message-from {
+    font-weight: 600;
+}
+
+.message-content {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.message-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.message-input-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.message-input-row input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.message-input-row input:disabled {
+    background: #f5f5f5;
+}
