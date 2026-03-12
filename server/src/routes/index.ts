@@ -11,6 +11,12 @@ import {
   requestAuthenticationFromTTP,
   requestSessionKeyFromTTP,
 } from "../auth";
+import { createSession } from "../session";
+import { decryptWithRSAPrivateKeyAsString } from "../crypto";
+import { getServerPrivateKey } from "../keys";
+
+// Re-export message handlers
+export { handleSendMessage, handleReceiveMessage, handleSendToClient } from "./messages";
 
 /**
  * Handle POST /service-request requests
@@ -226,7 +232,38 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
       message: "Session key received from TTP",
     });
 
-    // Step 4: Return response with encrypted session keys
+    // Step 4: Decrypt server's session key and create session
+    let decryptedSessionKey: string;
+    try {
+      decryptedSessionKey = decryptWithRSAPrivateKeyAsString(
+        getServerPrivateKey(),
+        sessionKeyResult.serverSessionKey!
+      );
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      logError("DECRYPTION_FAILED", {
+        clientId,
+        message: `Failed to decrypt server session key: ${msg}`,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to decrypt session key",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create session with decrypted AES key
+    const session = createSession(clientId, serverIdToUse, decryptedSessionKey);
+
+    logSuccess("SESSION_ESTABLISHED", {
+      clientId,
+      message: "Session created with decrypted AES-256 key",
+      details: { serverId: serverIdToUse, sessionId: session.id },
+    });
+
     logSuccess("VERIFICATION_SUCCESS", {
       clientId,
       message: "Client verification and session key generation successful",

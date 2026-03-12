@@ -2,6 +2,8 @@
  * Server API request/response type definitions
  */
 
+import { EncryptedMessage } from "../session/types";
+
 // Service request endpoint types
 export interface ServiceRequestBody {
   clientId: string;
@@ -31,3 +33,32 @@ export interface VerifyResponse {
   clientId?: string;
   verified?: boolean;
 }
+
+// Message endpoints types
+export interface SendMessageBody {
+  clientId: string;
+  serverId: string;
+  sessionKey?: string; // Optional: if not using stored session
+  encryptedMessage: EncryptedMessage;
+}
+
+export interface SendMessageResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  messageId?: string;
+  timestamp?: string;
+}
+
+export interface ReceiveMessageBody {
+  clientId: string;
+  serverId: string;
+}
+
+export interface ReceiveMessageResponse {
+  success: boolean;
+  messages?: any[]; // Array of messages
+  message?: string;
+  error?: string;
+}
+

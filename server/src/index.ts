@@ -4,7 +4,8 @@
  */
 
 import { logInfo } from "./logs";
-import { handleServiceRequest, handleVerifyClient } from "./routes";
+import { handleServiceRequest, handleVerifyClient, handleSendMessage, handleReceiveMessage, handleSendToClient } from "./routes";
+import { getServerPublicKey } from "./keys";
 
 const PORT = 3001;
 
@@ -22,6 +23,14 @@ const server = Bun.serve({
       return new Response("SCS Server is running", { status: 200 });
     }
 
+    // GET /public-key - Return server's RSA public key
+    if (url.pathname === "/public-key" && request.method === "GET") {
+      return new Response(
+        JSON.stringify({ publicKey: getServerPublicKey() }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // POST /service-request - Client requests service
     if (url.pathname === "/service-request" && request.method === "POST") {
       return handleServiceRequest(request);
@@ -30,6 +39,21 @@ const server = Bun.serve({
     // POST /verify-client - Server verifies client
     if (url.pathname === "/verify-client" && request.method === "POST") {
       return handleVerifyClient(request);
+    }
+
+    // POST /message/send - Client sends encrypted message to server
+    if (url.pathname === "/message/send" && request.method === "POST") {
+      return handleSendMessage(request);
+    }
+
+    // POST /message/receive - Client receives encrypted messages
+    if (url.pathname === "/message/receive" && request.method === "POST") {
+      return handleReceiveMessage(request);
+    }
+
+    // POST /message/send-to-client - Server sends encrypted message to client
+    if (url.pathname === "/message/send-to-client" && request.method === "POST") {
+      return handleSendToClient(request);
     }
 
     return new Response("Not Found", { status: 404 });
