@@ -2,7 +2,7 @@
 
 The backend server component of the Secure Communication System. Handles client authentication, session management, and encrypted message delivery. Built with Node.js/Bun and Express-like HTTP routing.
 
-## 🎯 Features
+## Features
 
 - **Client Authentication**: Multi-step authentication flow coordinated with TTP
 - **Session Management**: Creates and manages AES-256 session keys with clients
@@ -11,7 +11,7 @@ The backend server component of the Secure Communication System. Handles client 
 - **Certificate Validation**: Validates client and server certificates from TTP
 - **Structured Logging**: Comprehensive event logging for debugging and monitoring
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Bun or Node.js 20+
@@ -39,7 +39,7 @@ npm run build
 bun dev
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -70,7 +70,7 @@ src/
     └── api.test.ts        # API integration tests
 ```
 
-## 🔐 Cryptography
+## Cryptography
 
 ### RSA-4096-OAEP-SHA256
 - Key generation: 4096-bit modulus
@@ -88,7 +88,7 @@ src/
 - **SHA-256**: Hashing for fingerprints and certificate validation
 - **Random**: Cryptographically secure random number generation
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Public Endpoints
 

@@ -2,7 +2,7 @@
 
 React + TypeScript + Vite-based web client for the Secure Communication System. Handles RSA key generation, TTP registration, authentication, and end-to-end encrypted messaging using Web Crypto API.
 
-## 🎯 Features
+## Features
 
 - **RSA-4096 Key Generation**: Browser-based key pair generation using Web Crypto API
 - **TTP Registration**: Register client with Trusted Third Party and receive X.509 certificates
@@ -12,7 +12,7 @@ React + TypeScript + Vite-based web client for the Secure Communication System. 
 - **Live Logging**: Event log showing all cryptographic operations
 - **Configuration Panel**: Set custom server and TTP URLs
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 18+ or Bun
@@ -41,7 +41,7 @@ npm run build
 
 Output goes to `dist/` directory.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -63,7 +63,7 @@ src/
 └── main.tsx                # React entry point
 ```
 
-## 🔐 Cryptography
+## Cryptography
 
 ### Web Crypto API
 - **RSA-OAEP-SHA256**: Asymmetric encryption for session key decryption
@@ -76,7 +76,7 @@ src/
 - Each message gets random IV and authentication tag
 - All crypto operations async to avoid blocking UI
 
-## 📡 API Communication
+## API Communication
 
 ### TTP Endpoints
 - `POST /register` - Register client and receive certificate
@@ -89,7 +89,7 @@ src/
 - `POST /message/send` - Send encrypted message
 - `POST /message/receive` - Fetch encrypted messages
 
-## 🔄 Authentication Flow
+## Authentication Flow
 
 1. **Generate Keys**: Browser creates RSA-4096 key pair (Web Crypto)
 2. **Register**: Send public key to TTP, receive certificate

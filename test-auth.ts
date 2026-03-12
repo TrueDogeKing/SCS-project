@@ -24,7 +24,7 @@ const results: TestResult[] = [];
 // Helper function to log test results
 function logResult(result: TestResult) {
   results.push(result);
-  const status = result.success ? "✓ PASS" : "✗ FAIL";
+  const status = result.success ? "v PASS" : "x FAIL";
   console.log(`\n${status}: ${result.name}`);
   console.log(`  ${result.message}`);
   if (result.data) {
@@ -191,7 +191,7 @@ function testSessionKeyDecryption(
   try {
     // Decrypt client session key
     const clientSessionKeyBuffer = privateDecrypt(
-      { key: clientPrivate, padding: 4 },
+      { key: clientPrivate, padding: 4, oaepHash: "sha256" },
       Buffer.from(clientSessionKeyEncrypted, "base64")
     );
     const clientSessionKey = clientSessionKeyBuffer.toString("utf-8");
@@ -303,28 +303,28 @@ async function runTests() {
     const data = (await res.json()) as any;
     serverPublicKey = data.publicKey;
   } catch {
-    console.error("\n❌ Cannot fetch server public key. Is the server running?");
+    console.error("\nx Cannot fetch server public key. Is the server running?");
     process.exit(1);
   }
 
   // Register server with its real public key (so TTP encrypts for the correct key)
   const serverCert = await testRegisterServer(serverPublicKey);
   if (!serverCert) {
-    console.error("\n❌ Cannot continue without server registration");
+    console.error("\nx Cannot continue without server registration");
     process.exit(1);
   }
 
   // Register client
   const clientCert = await testRegisterClient(keys.clientPublic);
   if (!clientCert) {
-    console.error("\n❌ Cannot continue without client registration");
+    console.error("\nx Cannot continue without client registration");
     process.exit(1);
   }
 
   // Verify client and get session keys
   const verifyResult = await testVerifyClient(clientCert.pem);
   if (!verifyResult) {
-    console.error("\n❌ Cannot continue without successful verification");
+    console.error("\nx Cannot continue without successful verification");
     process.exit(1);
   }
 
@@ -348,16 +348,16 @@ async function runTests() {
   const failed = results.filter((r) => !r.success).length;
 
   results.forEach((r) => {
-    const icon = r.success ? "✓" : "✗";
+    const icon = r.success ? "v" : "x";
     console.log(`${icon} ${r.name}`);
   });
 
   console.log(`\n${passed} passed, ${failed} failed out of ${results.length} tests\n`);
 
   if (failed === 0) {
-    console.log("✓ All tests passed! Authentication flow is working correctly.\n");
+    console.log("v All tests passed! Authentication flow is working correctly.\n");
   } else {
-    console.log("✗ Some tests failed. Check the output above for details.\n");
+    console.log("x Some tests failed. Check the output above for details.\n");
     process.exit(1);
   }
 }

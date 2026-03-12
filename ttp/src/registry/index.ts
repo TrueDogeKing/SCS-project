@@ -19,9 +19,6 @@ export interface RegistryData {
   servers: Map<string, RegisteredEntity>;
 }
 
-/**
- * Create empty registry
- */
 export function createRegistry(): RegistryData {
   return {
     clients: new Map(),
@@ -29,10 +26,6 @@ export function createRegistry(): RegistryData {
   };
 }
 
-/**
- * Register an entity (client or server)
- * If the entity already exists, its public key and certificate are updated.
- */
 export function registerEntity(
   registry: RegistryData,
   entity: RegisteredEntity
@@ -43,16 +36,10 @@ export function registerEntity(
   return true;
 }
 
-/**
- * Get entity by ID
- */
 export function getEntity(registry: RegistryData, id: string): RegisteredEntity | undefined {
   return registry.clients.get(id) || registry.servers.get(id);
 }
 
-/**
- * Get entity by type
- */
 export function getEntitiesByType(
   registry: RegistryData,
   type: "CLIENT" | "SERVER"
@@ -61,16 +48,10 @@ export function getEntitiesByType(
   return Array.from(map.values());
 }
 
-/**
- * Check if entity exists
- */
 export function entityExists(registry: RegistryData, id: string): boolean {
   return registry.clients.has(id) || registry.servers.has(id);
 }
 
-/**
- * Update entity public key and certificate
- */
 export function updateEntityPublicKey(
   registry: RegistryData,
   id: string,

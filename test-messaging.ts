@@ -26,7 +26,7 @@ const results: TestResult[] = [];
 
 function logResult(result: TestResult) {
   results.push(result);
-  const status = result.success ? "✓ PASS" : "✗ FAIL";
+  const status = result.success ? "v PASS" : "x FAIL";
   console.log(`\n${status}: ${result.name}`);
   console.log(`  ${result.message}`);
 }
@@ -173,7 +173,7 @@ async function testAuthentication(clientCert: string, keys: any) {
     let decryptedSessionKey: string;
     try {
       const decrypted = privateDecrypt(
-        { key: keys.clientPrivate, padding: 4 },
+        { key: keys.clientPrivate, padding: 4, oaepHash: "sha256" },
         Buffer.from(authData.clientSessionKey, "base64")
       );
       decryptedSessionKey = decrypted.toString("utf-8");
@@ -346,14 +346,14 @@ async function runMessagingTests() {
   // Test registration
   const clientCert = await testRegisterEntities(keys);
   if (!clientCert) {
-    console.error("\n❌ Cannot continue without client registration");
+    console.error("\nx Cannot continue without client registration");
     process.exit(1);
   }
 
   // Test authentication
   const authData = await testAuthentication(clientCert, keys);
   if (!authData) {
-    console.error("\n❌ Cannot continue without authentication");
+    console.error("\nx Cannot continue without authentication");
     process.exit(1);
   }
 
@@ -374,16 +374,16 @@ async function runMessagingTests() {
   const failed = results.filter((r) => !r.success).length;
 
   results.forEach((r) => {
-    const icon = r.success ? "✓" : "✗";
+    const icon = r.success ? "v" : "x";
     console.log(`${icon} ${r.name}`);
   });
 
   console.log(`\n${passed} passed, ${failed} failed out of ${results.length} tests\n`);
 
   if (failed === 0) {
-    console.log("✓ All messaging tests passed!\n");
+    console.log("v All messaging tests passed!\n");
   } else {
-    console.log("✗ Some tests failed. Check output above.\n");
+    console.log("x Some tests failed. Check output above.\n");
     process.exit(1);
   }
 }

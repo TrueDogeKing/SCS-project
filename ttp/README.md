@@ -2,7 +2,7 @@
 
 The Trusted Third Party (TTP) component of the Secure Communication System. Issues X.509-like certificates, distributes session keys, and manages the entity registry. Built with Node.js/Bun and Express-like HTTP routing.
 
-## 🎯 Features
+## Features
 
 - **Certificate Generation**: Creates X.509-like certificates with fingerprints and validity dates
 - **Entity Registry**: Maintains database of registered clients and servers with public keys
@@ -11,7 +11,7 @@ The Trusted Third Party (TTP) component of the Secure Communication System. Issu
 - **Structured Logging**: Comprehensive event logging for all TTP operations
 - **Certificate Validation**: Validates certificate expiration and validity
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Bun or Node.js 20+
@@ -39,7 +39,7 @@ npm run build
 bun dev
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -63,7 +63,7 @@ src/
     └── api.test.ts        # API integration tests
 ```
 
-## 🔐 Cryptography
+## Cryptography
 
 ### Certificate Generation
 - **Format**: X.509-like structure (not standard X.509)
@@ -88,7 +88,7 @@ src/
 - **SHA-256**: Certificate fingerprinting and hashing
 - **Random**: Cryptographically secure random generation
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Registration Endpoint
 

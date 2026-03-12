@@ -132,7 +132,7 @@ for (const serviceType of serviceTypes) {
 
   const response = await handleServiceRequest(request);
   const result = await response.json();
-  console.log(`   ✓ Service type '${serviceType}': ${result.message}`);
+  console.log(`   v Service type '${serviceType}': ${result.message}`);
 }
 
 console.log("\n=== All Tests Completed ===\n");

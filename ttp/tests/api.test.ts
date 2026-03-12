@@ -17,8 +17,8 @@ console.log("Step 1: Generate RSA 4096-bit Key Pairs");
 const clientKeys = generateRSAKeyPair();
 const serverKeys = generateRSAKeyPair();
 
-console.log("   ✓ Client RSA 4096-bit key pair generated");
-console.log("   ✓ Server RSA 4096-bit key pair generated");
+console.log("   v Client RSA 4096-bit key pair generated");
+console.log("   v Server RSA 4096-bit key pair generated");
 
 // Step 2: Client registers with TTP
 console.log("\nStep 2: Client Registers with TTP");
@@ -41,14 +41,14 @@ const clientRegisterResponse = await handleRegister(clientRegisterRequest, regis
 const clientRegisterResult = await clientRegisterResponse.json();
 
 if (clientRegisterResult.success && clientRegisterResult.certificate) {
-  console.log("   ✓ Client registration successful");
-  console.log("   ✓ Certificate generated:");
+  console.log("   v Client registration successful");
+  console.log("   v Certificate generated:");
   console.log(`     - Fingerprint: ${clientRegisterResult.certificate.fingerprint.substring(0, 32)}...`);
   console.log(`     - Valid From: ${clientRegisterResult.certificate.validFrom}`);
   console.log(`     - Valid Until: ${clientRegisterResult.certificate.validUntil}`);
   console.log(`     - PEM length: ${clientRegisterResult.certificate.pem.length} bytes`);
 } else {
-  console.log("   ✗ Client registration failed:", clientRegisterResult.error);
+  console.log("   x Client registration failed:", clientRegisterResult.error);
   console.log("   Error details:", clientRegisterResult);
 }
 
@@ -73,20 +73,20 @@ const serverRegisterResponse = await handleRegister(serverRegisterRequest, regis
 const serverRegisterResult = await serverRegisterResponse.json();
 
 if (serverRegisterResult.success && serverRegisterResult.certificate) {
-  console.log("   ✓ Server registration successful");
-  console.log("   ✓ Certificate generated:");
+  console.log("   v Server registration successful");
+  console.log("   v Certificate generated:");
   console.log(`     - Fingerprint: ${serverRegisterResult.certificate.fingerprint.substring(0, 32)}...`);
   console.log(`     - Valid From: ${serverRegisterResult.certificate.validFrom}`);
   console.log(`     - Valid Until: ${serverRegisterResult.certificate.validUntil}`);
   console.log(`     - PEM length: ${serverRegisterResult.certificate.pem.length} bytes`);
 } else {
-  console.log("   ✗ Server registration failed:", serverRegisterResult.error);
+  console.log("   x Server registration failed:", serverRegisterResult.error);
   console.log("   Error details:", serverRegisterResult);
 }
 
 // Step 4: Client can now use certificate for service requests
 console.log("\nStep 4: Client Ready for Service Requests");
-console.log("   ✓ Client certificate available for secure communication");
+console.log("   v Client certificate available for secure communication");
 
 // Step 5: Server authenticates client with TTP
 console.log("\nStep 5: Server Authenticates Client with TTP");
@@ -107,11 +107,11 @@ const authResponse = await handleAuthenticate(authRequest, registry);
 const authResult = await authResponse.json();
 
 if (authResult.success) {
-  console.log("   ✓ Authentication successful");
-  console.log(`   ✓ Client ID: ${authResult.clientId}`);
-  console.log(`   ✓ Server ID: ${authResult.serverId}`);
+  console.log("   v Authentication successful");
+  console.log(`   v Client ID: ${authResult.clientId}`);
+  console.log(`   v Server ID: ${authResult.serverId}`);
 } else {
-  console.log("   ✗ Authentication failed:", authResult.error);
+  console.log("   x Authentication failed:", authResult.error);
 }
 
 // Step 6: Verify certificates are stored in registry
@@ -120,24 +120,24 @@ const registryClients = registry.clients.get("client_alice_001");
 const registryServers = registry.servers.get("server_app_001");
 
 if (registryClients && registryClients.certificate) {
-  console.log("   ✓ Client certificate stored in registry");
+  console.log("   v Client certificate stored in registry");
   console.log(`     - Subject: ${registryClients.certificate.subject}`);
 } else {
-  console.log("   ✗ Client certificate not found in registry");
+  console.log("   x Client certificate not found in registry");
 }
 
 if (registryServers && registryServers.certificate) {
-  console.log("   ✓ Server certificate stored in registry");
+  console.log("   v Server certificate stored in registry");
   console.log(`     - Subject: ${registryServers.certificate.subject}`);
 } else {
-  console.log("   ✗ Server certificate not found in registry");
+  console.log("   x Server certificate not found in registry");
 }
 
 // Summary
 console.log("\n=== Registration Flow Complete ===");
-console.log("✓ Both client and server registered with TTP");
-console.log("✓ X.509 certificates generated and returned");
-console.log("✓ Certificates stored in in-memory registry");
-console.log("✓ Certificates ready for authentication flow");
+console.log("v Both client and server registered with TTP");
+console.log("v X.509 certificates generated and returned");
+console.log("v Certificates stored in in-memory registry");
+console.log("v Certificates ready for authentication flow");
 console.log("\nCheck logs/ttp.log for detailed logging output\n");
 

@@ -2,7 +2,7 @@
 
 A full-stack encrypted messaging system with end-to-end encryption, certificate-based authentication, and a Trusted Third Party (TTP) for secure key exchange.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 SCS-project/
@@ -14,7 +14,7 @@ SCS-project/
 └── package.json    # Root package configuration
 ```
 
-## 🔐 Architecture Overview
+## Architecture Overview
 
 ### Three-Component System
 
@@ -44,7 +44,7 @@ SCS-project/
 - **SHA-256**: Hashing and certificate fingerprints
 - **Randomly-generated IVs and Authentication Tags**: For GCM mode
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -85,7 +85,7 @@ bun dev
 # Listening on http://localhost:5173
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Test Authentication Flow
 ```bash
@@ -101,7 +101,7 @@ Tests end-to-end encryption/decryption with AES-256-GCM and message delivery.
 
 Run both tests from the project root in a shell/terminal where all three services are running.
 
-## 📋 API Endpoints
+## API Endpoints
 
 ### TTP Service (`/ttp`)
 
@@ -139,7 +139,7 @@ Run both tests from the project root in a shell/terminal where all three service
 
 - **GET** `/public-key` - Get server's public key for registration
 
-## 🔑 Security Features
+## Security Features
 
 ### Key Exchange
 1. Client generates RSA-4096 key pair in browser (Web Crypto API)
@@ -161,7 +161,7 @@ Run both tests from the project root in a shell/terminal where all three service
 - Certificates include validity dates
 - Server validates certificate expiration before authentication
 
-## 🛠️ Build & Deployment
+## Build & Deployment
 
 ### Server Build
 ```bash
@@ -185,7 +185,7 @@ bun run build
 bun dev
 ```
 
-## 📝 Project Scripts
+## Project Scripts
 
 ### Root Level
 - `bun install` - Install all dependencies
@@ -206,7 +206,7 @@ bun dev
 - `bun dev` - Start development server
 - `bun run build` - Build TypeScript
 
-## 🔄 Authentication Flow
+## Authentication Flow
 
 ```
 Client Browser
@@ -227,7 +227,7 @@ Client Browser
              └─> Both now share AES-256 session key ✓
 ```
 
-## 🐛 Debugging
+## Debugging
 
 ### Debug Logs
 - Browser: Open DevTools (F12), check Console tab for `[DEBUG]` and `[ERROR]` messages
@@ -246,7 +246,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 - Browser Web Crypto API requires matching OAEP hash parameters
 - Restart services after code changes
 
-## 📚 Documentation Files
+## Documentation Files
 
 - `test-auth.ts` - Authentication flow implementation
 - `test-messaging.ts` - End-to-end messaging example
@@ -254,7 +254,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 - `ttp/src/routes/` - TTP endpoint implementations
 - `client/src/hooks/useClient.ts` - Main client logic
 
-## 🔗 Technologies Used
+## Technologies Used
 
 - **Runtime:** Bun, Node.js
 - **Backend:** Express-like HTTP routing
@@ -263,7 +263,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 - **Styling:** CSS
 - **Build:** TypeScript compiler, Vite
 
-## 📄 License
+## License
 
 Project for academic purposes (6th Semester - Functional Programming)
 
