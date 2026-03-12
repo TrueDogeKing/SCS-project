@@ -8,7 +8,8 @@ import { ServiceRequestBody, VerifyRequestBody } from "./types";
 import {
   verifyClientCertificate,
   authorizeServiceAccess,
-  authenticateWithTTP,
+  requestAuthenticationFromTTP,
+  requestSessionKeyFromTTP,
 } from "../auth";
 
 /**
@@ -110,12 +111,17 @@ export async function handleServiceRequest(request: Request): Promise<Response> 
 
 /**
  * Handle POST /verify-client requests
- * Request body: { clientId, clientCertificate, sessionId }
+ * Request body: { clientId, clientCertificate, serverId, ttpUrl }
+ * Implementation of authentication flow:
+ * 1. Verify client certificate
+ * 2. Request authentication from TTP
+ * 3. Request AES session key from TTP
+ * 4. Return encrypted session keys to client
  */
 export async function handleVerifyClient(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as VerifyRequestBody;
-    const { clientId, clientCertificate, sessionId } = body;
+    const body = (await request.json()) as VerifyRequestBody & { serverId?: string; ttpUrl?: string };
+    const { clientId, clientCertificate, serverId, ttpUrl } = body;
 
     // Validate request
     if (!clientId) {
@@ -133,18 +139,22 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
       );
     }
 
+    // Use default values if not provided
+    const serverIdToUse = serverId || "server_001";
+    const ttpUrlToUse = ttpUrl || "http://localhost:3002";
+
     logInfo("VERIFY_REQUEST", {
       clientId,
-      message: "Client verification request",
-      details: sessionId ? { sessionId } : undefined,
+      message: "Client verification request initiated",
+      details: { serverId: serverIdToUse },
     });
 
-    // Verify client certificate
+    // Step 1: Verify client certificate locally
     const certVerification = await verifyClientCertificate(clientId, clientCertificate);
     if (!certVerification.success) {
       logWarn("VERIFICATION_FAILED", {
         clientId,
-        message: "Certificate verification failed",
+        message: "Local certificate verification failed",
       });
 
       return new Response(
@@ -156,35 +166,83 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
       );
     }
 
-    // Authenticate with TTP
-    const authResult = await authenticateWithTTP(clientId, "server_id", clientCertificate);
+    logInfo("VERIFICATION_STEP", {
+      clientId,
+      message: "Local certificate verification passed",
+    });
+
+    // Step 2: Request authentication from TTP
+    const authResult = await requestAuthenticationFromTTP(
+      ttpUrlToUse,
+      clientId,
+      serverIdToUse,
+      clientCertificate
+    );
     if (!authResult.success) {
       logWarn("VERIFICATION_FAILED", {
         clientId,
         message: "TTP authentication failed",
+        details: { error: authResult.error || "Unknown error" },
       });
 
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Authentication failed",
+          error: `TTP authentication failed: ${authResult.error}`,
         }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
+    logSuccess("VERIFICATION_STEP", {
+      clientId,
+      message: "TTP authentication successful",
+    });
+
+    // Step 3: Request session key from TTP
+    const sessionKeyResult = await requestSessionKeyFromTTP(
+      ttpUrlToUse,
+      clientId,
+      serverIdToUse
+    );
+    if (!sessionKeyResult.success) {
+      logWarn("VERIFICATION_FAILED", {
+        clientId,
+        message: "TTP session key request failed",
+        details: { error: sessionKeyResult.error || "Unknown error" },
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Session key generation failed: ${sessionKeyResult.error}`,
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logSuccess("VERIFICATION_STEP", {
+      clientId,
+      message: "Session key received from TTP",
+    });
+
+    // Step 4: Return response with encrypted session keys
     logSuccess("VERIFICATION_SUCCESS", {
       clientId,
-      message: "Client verification successful",
+      message: "Client verification and session key generation successful",
+      details: { serverId: serverIdToUse },
     });
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Client verification successful",
+        message: "Client verification and session key generation successful",
         clientId,
         verified: true,
-        sessionKey: authResult.sessionKey,
+        // Server's encrypted session key (server will use this with its private key to decrypt)
+        sessionKey: sessionKeyResult.serverSessionKey,
+        // Client's encrypted session key (server relays this to client for decryption)
+        clientSessionKey: sessionKeyResult.clientSessionKey,
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );

@@ -6,7 +6,7 @@
 import { logInfo, logSuccess, logWarn, logError } from "../logs";
 import { RegistryData, registerEntity, getEntity } from "../registry";
 import { RegisterRequest, AuthenticateRequest, SessionKeyRequest } from "./types";
-import { generateCertificate } from "../crypto";
+import { generateCertificate, generateSessionKey, encryptWithRSAPublicKey, verifyCertificateValidity } from "../crypto";
 
 /**
  * Handle POST /register requests
@@ -209,6 +209,38 @@ export async function handleAuthenticate(
       );
     }
 
+    // Verify client certificate validity
+    if (!verifyCertificateValidity(client.certificate)) {
+      logWarn("AUTH_FAILED", {
+        entityId: clientId,
+        message: "Client certificate is invalid or expired",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Client certificate is invalid or expired",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify server certificate validity
+    if (!verifyCertificateValidity(server.certificate)) {
+      logWarn("AUTH_FAILED", {
+        entityId: serverId,
+        message: "Server certificate is invalid or expired",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Server certificate is invalid or expired",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     logSuccess("AUTH_SUCCESS", {
       entityId: clientId,
       entityType: "CLIENT",
@@ -222,6 +254,7 @@ export async function handleAuthenticate(
         message: "Authentication successful",
         clientId,
         serverId,
+        status: "VERIFIED",
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
@@ -293,20 +326,67 @@ export async function handleSessionKey(
       );
     }
 
-    // TODO: Generate session key using crypto utilities
-    // TODO: Encrypt session key with client and server public keys
+    // Generate AES-256 session key (256 bits / 32 bytes)
+    const sessionKeyBase64 = generateSessionKey();
+
     logInfo("SESSION_KEY_GENERATED", {
-      message: "Session key generated (TODO: implement encryption)",
+      message: "Session key generated for client and server",
+      details: { clientId, serverId },
+    });
+
+    // Encrypt session key with client's RSA public key
+    let encryptedClientSessionKey: string;
+    try {
+      encryptedClientSessionKey = encryptWithRSAPublicKey(client.publicKey, sessionKeyBase64);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      logError("ERROR", {
+        message: `Failed to encrypt session key for client: ${msg}`,
+        entityId: clientId,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to encrypt session key for client",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Encrypt session key with server's RSA public key
+    let encryptedServerSessionKey: string;
+    try {
+      encryptedServerSessionKey = encryptWithRSAPublicKey(server.publicKey, sessionKeyBase64);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      logError("ERROR", {
+        message: `Failed to encrypt session key for server: ${msg}`,
+        entityId: serverId,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to encrypt session key for server",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logSuccess("SESSION_KEY_GENERATED", {
+      message: "Session key encrypted for both client and server",
       details: { clientId, serverId },
     });
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Session key generation request accepted",
+        message: "Session key generation successful",
         clientId,
         serverId,
-        // TODO: Add encrypted session keys for client and server
+        clientSessionKey: encryptedClientSessionKey,
+        serverSessionKey: encryptedServerSessionKey,
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
