@@ -6,10 +6,12 @@
 import { logInfo, logSuccess, logWarn, logError } from "../logs";
 import { RegistryData, registerEntity, getEntity } from "../registry";
 import { RegisterRequest, AuthenticateRequest, SessionKeyRequest } from "./types";
+import { generateCertificate } from "../crypto";
 
 /**
  * Handle POST /register requests
  * Request body: { id, type, name, publicKey }
+ * Response: Certificate for entity
  */
 export async function handleRegister(
   request: Request,
@@ -54,20 +56,43 @@ export async function handleRegister(
       message: `Registration request from ${type}`,
     });
 
-    // Register entity
+    // Generate certificate
+    let certificate;
+    try {
+      certificate = generateCertificate(id, type as "CLIENT" | "SERVER", name, publicKey);
+    } catch (certError) {
+      const message = certError instanceof Error ? certError.message : "Certificate generation failed";
+      logError("ERROR", {
+        entityId: id,
+        message: `Certificate generation error: ${message}`,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to generate certificate",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Register entity with certificate
     const registered = registerEntity(registry, {
       id,
       type: type as "CLIENT" | "SERVER",
       name,
       publicKey,
+      certificate,
       registeredAt: new Date().toISOString(),
     });
 
     if (registered) {
-      logSuccess("SERVER_REGISTERED" as any, {
+      const eventType = type === "CLIENT" ? "CLIENT_REGISTERED" : "SERVER_REGISTERED";
+      logSuccess(eventType as any, {
         entityId: id,
         entityType: type,
         message: `${type} registered successfully`,
+        details: { certificateFingerprint: certificate.fingerprint.substring(0, 16) },
       });
 
       return new Response(
@@ -75,6 +100,12 @@ export async function handleRegister(
           success: true,
           message: `${type} registered successfully`,
           entityId: id,
+          certificate: {
+            pem: certificate.pem,
+            fingerprint: certificate.fingerprint,
+            validFrom: certificate.validFrom,
+            validUntil: certificate.validUntil,
+          },
         }),
         { status: 201, headers: { "Content-Type": "application/json" } }
       );

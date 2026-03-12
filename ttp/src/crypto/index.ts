@@ -40,3 +40,9 @@ export {
   generateRandomHex,
   generateSecureToken,
 } from "./random";
+
+// Certificate utilities
+export {
+  generateCertificate,
+  verifyCertificateValidity,
+} from "./certificate";

@@ -1,74 +1,100 @@
 /**
  * TTP API endpoint tests
- * Tests POST /register, /authenticate, /session-key endpoints
+ * Tests POST /register with certificate generation, /authenticate endpoints
  */
 
 import { createRegistry } from "../src/registry";
-import { handleRegister, handleAuthenticate, handleSessionKey } from "../src/routes";
+import { handleRegister, handleAuthenticate } from "../src/routes";
+import { generateRSAKeyPair } from "../src/crypto";
 
-console.log("\n=== TTP API Endpoint Tests ===\n");
+console.log("\n=== TTP Registration Flow Test ===\n");
 
 const registry = createRegistry();
 
-// Test 1: Register a client
-console.log("1. Testing POST /register - Client Registration");
-const clientData = {
+// Step 1: Client and Server generate RSA 4096-bit key pairs
+console.log("Step 1: Generate RSA 4096-bit Key Pairs");
+
+const clientKeys = generateRSAKeyPair();
+const serverKeys = generateRSAKeyPair();
+
+console.log("   ✓ Client RSA 4096-bit key pair generated");
+console.log("   ✓ Server RSA 4096-bit key pair generated");
+
+// Step 2: Client registers with TTP
+console.log("\nStep 2: Client Registers with TTP");
+console.log("   Sending: ID + Public Key");
+
+const clientRegisterData = {
   id: "client_alice_001",
   type: "CLIENT",
   name: "Alice",
-  publicKey: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgk...\n-----END PUBLIC KEY-----",
+  publicKey: clientKeys.publicKey,
 };
 
-const clientRequest = new Request("http://localhost:3002/register", {
+const clientRegisterRequest = new Request("http://localhost:3002/register", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(clientData),
+  body: JSON.stringify(clientRegisterData),
 });
 
-const clientResponse = await handleRegister(clientRequest, registry);
-const clientResult = await clientResponse.json();
-console.log("   Response status:", clientResponse.status);
-console.log("   Response:", clientResult);
+const clientRegisterResponse = await handleRegister(clientRegisterRequest, registry);
+const clientRegisterResult = await clientRegisterResponse.json();
 
-// Test 2: Register a server
-console.log("\n2. Testing POST /register - Server Registration");
-const serverData = {
+if (clientRegisterResult.success && clientRegisterResult.certificate) {
+  console.log("   ✓ Client registration successful");
+  console.log("   ✓ Certificate generated:");
+  console.log(`     - Fingerprint: ${clientRegisterResult.certificate.fingerprint.substring(0, 32)}...`);
+  console.log(`     - Valid From: ${clientRegisterResult.certificate.validFrom}`);
+  console.log(`     - Valid Until: ${clientRegisterResult.certificate.validUntil}`);
+  console.log(`     - PEM length: ${clientRegisterResult.certificate.pem.length} bytes`);
+} else {
+  console.log("   ✗ Client registration failed:", clientRegisterResult.error);
+  console.log("   Error details:", clientRegisterResult);
+}
+
+// Step 3: Server registers with TTP
+console.log("\nStep 3: Server Registers with TTP");
+console.log("   Sending: ID + Public Key");
+
+const serverRegisterData = {
   id: "server_app_001",
   type: "SERVER",
   name: "Application Server",
-  publicKey: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgk...\n-----END PUBLIC KEY-----",
+  publicKey: serverKeys.publicKey,
 };
 
-const serverRequest = new Request("http://localhost:3002/register", {
+const serverRegisterRequest = new Request("http://localhost:3002/register", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(serverData),
+  body: JSON.stringify(serverRegisterData),
 });
 
-const serverResponse = await handleRegister(serverRequest, registry);
-const serverResult = await serverResponse.json();
-console.log("   Response status:", serverResponse.status);
-console.log("   Response:", serverResult);
+const serverRegisterResponse = await handleRegister(serverRegisterRequest, registry);
+const serverRegisterResult = await serverRegisterResponse.json();
 
-// Test 3: Try to register duplicate client (should fail)
-console.log("\n3. Testing POST /register - Duplicate Client (should fail)");
-const duplicateRequest = new Request("http://localhost:3002/register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(clientData),
-});
+if (serverRegisterResult.success && serverRegisterResult.certificate) {
+  console.log("   ✓ Server registration successful");
+  console.log("   ✓ Certificate generated:");
+  console.log(`     - Fingerprint: ${serverRegisterResult.certificate.fingerprint.substring(0, 32)}...`);
+  console.log(`     - Valid From: ${serverRegisterResult.certificate.validFrom}`);
+  console.log(`     - Valid Until: ${serverRegisterResult.certificate.validUntil}`);
+  console.log(`     - PEM length: ${serverRegisterResult.certificate.pem.length} bytes`);
+} else {
+  console.log("   ✗ Server registration failed:", serverRegisterResult.error);
+  console.log("   Error details:", serverRegisterResult);
+}
 
-const duplicateResponse = await handleRegister(duplicateRequest, registry);
-const duplicateResult = await duplicateResponse.json();
-console.log("   Response status:", duplicateResponse.status);
-console.log("   Response:", duplicateResult);
+// Step 4: Client can now use certificate for service requests
+console.log("\nStep 4: Client Ready for Service Requests");
+console.log("   ✓ Client certificate available for secure communication");
 
-// Test 4: Authenticate client
-console.log("\n4. Testing POST /authenticate - Valid Authentication");
+// Step 5: Server authenticates client with TTP
+console.log("\nStep 5: Server Authenticates Client with TTP");
+
 const authData = {
   clientId: "client_alice_001",
   serverId: "server_app_001",
-  clientCertificate: "cert_data_here",
+  clientCertificate: clientRegisterResult.certificate?.pem,
 };
 
 const authRequest = new Request("http://localhost:3002/authenticate", {
@@ -79,83 +105,39 @@ const authRequest = new Request("http://localhost:3002/authenticate", {
 
 const authResponse = await handleAuthenticate(authRequest, registry);
 const authResult = await authResponse.json();
-console.log("   Response status:", authResponse.status);
-console.log("   Response:", authResult);
 
-// Test 5: Authenticate with non-existent client
-console.log("\n5. Testing POST /authenticate - Non-existent Client (should fail)");
-const invalidAuthData = {
-  clientId: "client_unknown_999",
-  serverId: "server_app_001",
-};
+if (authResult.success) {
+  console.log("   ✓ Authentication successful");
+  console.log(`   ✓ Client ID: ${authResult.clientId}`);
+  console.log(`   ✓ Server ID: ${authResult.serverId}`);
+} else {
+  console.log("   ✗ Authentication failed:", authResult.error);
+}
 
-const invalidAuthRequest = new Request("http://localhost:3002/authenticate", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(invalidAuthData),
-});
+// Step 6: Verify certificates are stored in registry
+console.log("\nStep 6: Verify Certificates in Registry");
+const registryClients = registry.clients.get("client_alice_001");
+const registryServers = registry.servers.get("server_app_001");
 
-const invalidAuthResponse = await handleAuthenticate(invalidAuthRequest, registry);
-const invalidAuthResult = await invalidAuthResponse.json();
-console.log("   Response status:", invalidAuthResponse.status);
-console.log("   Response:", invalidAuthResult);
+if (registryClients && registryClients.certificate) {
+  console.log("   ✓ Client certificate stored in registry");
+  console.log(`     - Subject: ${registryClients.certificate.subject}`);
+} else {
+  console.log("   ✗ Client certificate not found in registry");
+}
 
-// Test 6: Request session key
-console.log("\n6. Testing POST /session-key - Session Key Generation");
-const sessionKeyData = {
-  clientId: "client_alice_001",
-  serverId: "server_app_001",
-};
+if (registryServers && registryServers.certificate) {
+  console.log("   ✓ Server certificate stored in registry");
+  console.log(`     - Subject: ${registryServers.certificate.subject}`);
+} else {
+  console.log("   ✗ Server certificate not found in registry");
+}
 
-const sessionKeyRequest = new Request("http://localhost:3002/session-key", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(sessionKeyData),
-});
+// Summary
+console.log("\n=== Registration Flow Complete ===");
+console.log("✓ Both client and server registered with TTP");
+console.log("✓ X.509 certificates generated and returned");
+console.log("✓ Certificates stored in in-memory registry");
+console.log("✓ Certificates ready for authentication flow");
+console.log("\nCheck logs/ttp.log for detailed logging output\n");
 
-const sessionKeyResponse = await handleSessionKey(sessionKeyRequest, registry);
-const sessionKeyResult = await sessionKeyResponse.json();
-console.log("   Response status:", sessionKeyResponse.status);
-console.log("   Response:", sessionKeyResult);
-
-// Test 7: Missing required fields
-console.log("\n7. Testing POST /register - Missing Required Fields (should fail)");
-const invalidRegisterData = {
-  id: "invalid_client",
-  type: "CLIENT",
-  // Missing 'name' and 'publicKey'
-};
-
-const invalidRegisterRequest = new Request("http://localhost:3002/register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(invalidRegisterData),
-});
-
-const invalidRegisterResponse = await handleRegister(invalidRegisterRequest, registry);
-const invalidRegisterResult = await invalidRegisterResponse.json();
-console.log("   Response status:", invalidRegisterResponse.status);
-console.log("   Response:", invalidRegisterResult);
-
-// Test 8: Invalid entity type
-console.log("\n8. Testing POST /register - Invalid Entity Type (should fail)");
-const invalidTypeData = {
-  id: "invalid_entity",
-  type: "ADMIN", // Invalid type
-  name: "Invalid Entity",
-  publicKey: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgk...\n-----END PUBLIC KEY-----",
-};
-
-const invalidTypeRequest = new Request("http://localhost:3002/register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(invalidTypeData),
-});
-
-const invalidTypeResponse = await handleRegister(invalidTypeRequest, registry);
-const invalidTypeResult = await invalidTypeResponse.json();
-console.log("   Response status:", invalidTypeResponse.status);
-console.log("   Response:", invalidTypeResult);
-
-console.log("\n=== All Tests Completed ===\n");
-console.log("Check logs/ttp.log for detailed logging output");

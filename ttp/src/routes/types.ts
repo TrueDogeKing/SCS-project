@@ -2,6 +2,8 @@
  * TTP API request/response type definitions
  */
 
+import { Certificate } from "../crypto";
+
 // Register endpoint types
 export interface RegisterRequest {
   id: string;
@@ -15,6 +17,7 @@ export interface RegisterResponse {
   message?: string;
   error?: string;
   entityId?: string;
+  certificate?: Certificate; // X.509 certificate
 }
 
 // Authenticate endpoint types

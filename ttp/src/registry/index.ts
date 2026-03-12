@@ -3,11 +3,14 @@
  * Stores client and server information
  */
 
+import { Certificate } from "../crypto";
+
 export interface RegisteredEntity {
   id: string; // SHA-256 based ID
   type: "CLIENT" | "SERVER";
   name: string;
   publicKey: string; // PEM format
+  certificate: Certificate; // X.509 certificate
   registeredAt: string; // ISO timestamp
 }
 
@@ -69,12 +72,13 @@ export function entityExists(registry: RegistryData, id: string): boolean {
 }
 
 /**
- * Update entity public key
+ * Update entity public key and certificate
  */
 export function updateEntityPublicKey(
   registry: RegistryData,
   id: string,
-  publicKey: string
+  publicKey: string,
+  certificate: Certificate
 ): boolean {
   const entity = getEntity(registry, id);
   if (!entity) {
@@ -82,5 +86,6 @@ export function updateEntityPublicKey(
   }
 
   entity.publicKey = publicKey;
+  entity.certificate = certificate;
   return true;
 }

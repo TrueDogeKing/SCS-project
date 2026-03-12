@@ -23,3 +23,13 @@ export interface HashResult {
   base64: string; 
   buffer: Buffer; 
 }
+
+export interface Certificate {
+  pem: string; // PEM encoded certificate
+  der: string; // Base64 encoded DER
+  fingerprint: string; // SHA-256 fingerprint
+  subject: string;
+  issuer: string;
+  validFrom: string; // ISO timestamp
+  validUntil: string; // ISO timestamp
+}
