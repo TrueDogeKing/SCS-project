@@ -98,7 +98,7 @@ src/
 5. **Decrypt**: Client decrypts encrypted session key with RSA private key
 6. **Ready**: Client and server now share AES-256 session key
 
-## 🛠️ Development
+##  Development
 
 ### Dependencies
 - **React 18**: UI framework
@@ -122,7 +122,7 @@ bun run preview
 bun run lint
 ```
 
-## 🐛 Debugging
+##  Debugging
 
 ### Browser Console
 Open DevTools (F12) and check the Console tab for debug logs:
@@ -155,11 +155,7 @@ export default defineConfig([
     },
   },
 ])
-```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
 // eslint.config.js
 import reactX from 'eslint-plugin-react-x'
 import reactDom from 'eslint-plugin-react-dom'

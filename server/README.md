@@ -207,7 +207,7 @@ Client Request
             (client decrypts with its private key)
 ```
 
-## 🛠️ Development
+##  Development
 
 ### Scripts
 
@@ -260,7 +260,7 @@ SERVER_KEY_PATH=path/to/private/key.pem  # Overwrites default
 - TTP URL: `http://localhost:3002`
 - RSA Key: Generated and stored at startup (in-memory)
 
-## 🔐 Security Considerations
+##  Security Considerations
 
 ### Session Keys
 - Generated per client-server pair
@@ -283,7 +283,7 @@ SERVER_KEY_PATH=path/to/private/key.pem  # Overwrites default
 - Server validates certificate validity dates
 - Expired certificates rejected
 
-## 🐛 Debugging
+##  Debugging
 
 ### Logging
 
@@ -303,7 +303,7 @@ Look for in logs:
 - `AUTH_SUCCESS` / `AUTH_FAILED` - Final auth result
 - `DECRYPTION_FAILED` - Crypto operation errors
 
-## 📊 Data Structures
+##  Data Structures
 
 ### Session
 ```typescript
@@ -329,7 +329,7 @@ interface EncryptedMessage {
 }
 ```
 
-## 🚀 Deployment
+##  Deployment
 
 ### Building
 ```bash
@@ -353,7 +353,7 @@ EXPOSE 3001
 CMD ["node", "dist/index.js"]
 ```
 
-## 📚 Related Components
+##  Related Components
 
 - **TTP** (`../ttp/`) - Trusted Third Party for certificate issuance and key distribution
 - **Client** (`../client/`) - React browser client

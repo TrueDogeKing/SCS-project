@@ -169,7 +169,7 @@ Response:
 }
 ```
 
-## 🔄 Key Distribution Flow
+##  Key Distribution Flow
 
 ```
 Client → TTP: Register (send public key)
@@ -202,7 +202,7 @@ Client: Store AES key for this server session
 ✓ Both now share same AES-256 key, can communicate securely
 ```
 
-## 🛠️ Development
+##  Development
 
 ### Scripts
 
@@ -232,7 +232,7 @@ Tests verify:
 - Authentication flow
 - Session key generation
 
-## 📝 Configuration
+##  Configuration
 
 ### Environment Variables (Optional)
 
@@ -247,7 +247,7 @@ TTP_HOST=localhost
 - Host: `localhost`
 - Certificate Validity: 365 days
 
-## 🔐 Security Considerations
+##  Security Considerations
 
 ### Certificate Storage
 - In-memory registry (not persistent)
@@ -270,7 +270,7 @@ TTP_HOST=localhost
 - Certificates checked for expiration
 - Fingerprints used to verify identity
 
-## 📊 Data Structures
+##  Data Structures
 
 ### Certificate
 ```typescript
@@ -302,7 +302,7 @@ interface RegistryData {
 }
 ```
 
-## 🐛 Debugging
+##  Debugging
 
 ### Logging
 
@@ -356,13 +356,13 @@ EXPOSE 3002
 CMD ["node", "dist/index.js"]
 ```
 
-## 📚 Related Components
+##  Related Components
 
 - **Server** (`../server/`) - Application backend
 - **Client** (`../client/`) - React browser client
 - **Root** (`../`) - Project overview and general setup
 
-## 🔍 Key Algorithms
+##  Key Algorithms
 
 ### Certificate Generation
 ```
