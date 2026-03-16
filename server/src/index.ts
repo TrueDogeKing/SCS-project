@@ -3,7 +3,7 @@
  * Provides service to authenticated clients
  */
 
-import { logInfo } from "./logs/index.js";
+import { logInfo } from "./logInfo/index.js";
 import { handleServiceRequest, handleVerifyClient, handleSendMessage, handleReceiveMessage, handleSendToClient } from "./routes/index.js";
 import { getServerPublicKey } from "./keys.js";
 

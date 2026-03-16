@@ -4,7 +4,7 @@
  */
 
 import { generateRSAKeyPair } from "./crypto/index.js";
-import { logInfo } from "./logs/index.js";
+import { logInfo } from "./logInfo/index.js";
 
 const serverKeys = generateRSAKeyPair();
 

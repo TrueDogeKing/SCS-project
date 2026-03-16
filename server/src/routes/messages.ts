@@ -2,7 +2,7 @@
  * Message handlers for encrypted client-server communication
  */
 
-import { logInfo, logWarn, logError, logSuccess } from "../logs/index.js";
+import { logInfo, logWarn, logError, logSuccess } from "../logInfo/index.js";
 import { SendMessageBody, ReceiveMessageBody, SendMessageResponse, ReceiveMessageResponse } from "./types.js";
 import { getSession, createSession, updateSessionActivity } from "../session/index.js";
 import { decryptMessage, encryptMessage, isValidEncryptedMessage } from "../session/messaging.js";

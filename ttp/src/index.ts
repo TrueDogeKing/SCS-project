@@ -4,7 +4,7 @@
  */
 
 import { createRegistry } from "./registry";
-import { logInfo } from "./logs";
+import { logInfo } from "./logInfo";
 import { handleRegister, handleAuthenticate, handleSessionKey } from "./routes";
 
 const PORT = 3002;

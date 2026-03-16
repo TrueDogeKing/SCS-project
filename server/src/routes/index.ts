@@ -3,7 +3,7 @@
  * Implements POST /service-request and POST /verify-client endpoints
  */
 
-import { logInfo, logWarn, logError, logSuccess } from "../logs/index.js";
+import { logInfo, logWarn, logError, logSuccess } from "../logInfo/index.js";
 import { ServiceRequestBody, VerifyRequestBody } from "./types.js";
 import {
   verifyClientCertificate,

@@ -3,7 +3,7 @@
  * Implements POST /register, /authenticate, /session-key endpoints
  */
 
-import { logInfo, logSuccess, logWarn, logError } from "../logs";
+import { logInfo, logSuccess, logWarn, logError } from "../logInfo";
 import { RegistryData, registerEntity, getEntity } from "../registry";
 import { RegisterRequest, AuthenticateRequest, SessionKeyRequest } from "./types";
 import { generateCertificate, generateSessionKey, encryptWithRSAPublicKey, verifyCertificateValidity } from "../crypto";
