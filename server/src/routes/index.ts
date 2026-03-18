@@ -72,12 +72,13 @@ export async function handleServiceRequest(request: Request): Promise<Response> 
       logWarn("REQUEST_INVALID", {
         clientId,
         message: "Service authorization failed",
+        details: { serviceType, error: authResult.error || "Unknown error" },
       });
 
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Service authorization failed",
+          error: authResult.error || "Service authorization failed",
         }),
         { status: 403, headers: { "Content-Type": "application/json" } }
       );
@@ -156,7 +157,7 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
     });
 
     // Step 1: Verify client certificate locally
-    const certVerification = await verifyClientCertificate(clientId, clientCertificate);
+    const certVerification = await verifyClientCertificate(clientId, clientCertificate, ttpUrlToUse);
     if (!certVerification.success) {
       logWarn("VERIFICATION_FAILED", {
         clientId,

@@ -35,6 +35,19 @@ export interface AuthenticateResponse {
   serverId?: string;
 }
 
+// Certificate validation endpoint types
+export interface ValidateCertificateRequest {
+  clientId: string;
+  clientCertificate: string;
+}
+
+export interface ValidateCertificateResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  clientId?: string;
+}
+
 // Session key endpoint types
 export interface SessionKeyRequest {
   clientId: string;

@@ -1,12 +1,147 @@
 /**
  * TTP API routes
- * Implements POST /register, /authenticate, /session-key endpoints
+ * Implements POST /register, /authenticate, /validate-certificate, /session-key endpoints
  */
 
+import * as forge from "node-forge";
 import { logInfo, logSuccess, logWarn, logError } from "../logInfo";
 import { RegistryData, registerEntity, getEntity } from "../registry";
-import { RegisterRequest, AuthenticateRequest, SessionKeyRequest } from "./types";
+import {
+  RegisterRequest,
+  AuthenticateRequest,
+  SessionKeyRequest,
+  ValidateCertificateRequest,
+} from "./types";
 import { generateCertificate, generateSessionKey, encryptWithRSAPublicKey, verifyCertificateValidity } from "../crypto";
+
+function getCertificateFingerprintHexFromPem(certificatePem: string): string {
+  const cert = forge.pki.certificateFromPem(certificatePem);
+  const certificateDer = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).bytes();
+  const fingerprint = forge.md.sha256.create();
+  fingerprint.update(certificateDer);
+  return fingerprint.digest().toHex();
+}
+
+/**
+ * Handle POST /validate-certificate requests
+ * Request body: { clientId, clientCertificate }
+ */
+export async function handleValidateCertificate(
+  request: Request,
+  registry: RegistryData
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as ValidateCertificateRequest;
+    const { clientId, clientCertificate } = body;
+
+    if (!clientId || !clientCertificate) {
+      logWarn("REQUEST_INVALID", {
+        message: "Certificate validation request missing required fields",
+        entityId: clientId,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Missing required fields: clientId, clientCertificate",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const client = getEntity(registry, clientId);
+    if (!client || client.type !== "CLIENT") {
+      logWarn("AUTH_FAILED", {
+        entityId: clientId,
+        message: "Client not found for certificate validation",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Client not found",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!verifyCertificateValidity(client.certificate)) {
+      logWarn("AUTH_FAILED", {
+        entityId: clientId,
+        message: "Stored client certificate is invalid or expired",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Client certificate is invalid or expired",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    let providedFingerprint: string;
+    try {
+      providedFingerprint = getCertificateFingerprintHexFromPem(clientCertificate);
+    } catch {
+      logWarn("AUTH_FAILED", {
+        entityId: clientId,
+        message: "Provided client certificate is not valid PEM X.509",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Provided certificate is not a valid X.509 PEM",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (providedFingerprint !== client.certificate.fingerprint) {
+      logWarn("AUTH_FAILED", {
+        entityId: clientId,
+        message: "Provided certificate fingerprint does not match TTP registry",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Certificate fingerprint mismatch",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logSuccess("VERIFICATION_STEP", {
+      entityId: clientId,
+      entityType: "CLIENT",
+      message: "Client certificate verified by TTP",
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Client certificate verified",
+        clientId,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logError("ERROR", {
+      message: `Certificate validation handler error: ${message}`,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Internal server error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
 
 /**
  * Handle POST /register requests

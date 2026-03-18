@@ -5,7 +5,12 @@
 
 import { createRegistry } from "./registry";
 import { logInfo } from "./logInfo";
-import { handleRegister, handleAuthenticate, handleSessionKey } from "./routes";
+import {
+  handleRegister,
+  handleAuthenticate,
+  handleValidateCertificate,
+  handleSessionKey,
+} from "./routes";
 
 const PORT = 3002;
 
@@ -59,6 +64,12 @@ const server = Bun.serve({
     // POST /authenticate - Authenticate client
     if (url.pathname === "/authenticate" && request.method === "POST") {
       const res = await handleAuthenticate(request, registry);
+      return addCorsHeaders(res);
+    }
+
+    // POST /validate-certificate - Validate client X.509 certificate
+    if (url.pathname === "/validate-certificate" && request.method === "POST") {
+      const res = await handleValidateCertificate(request, registry);
       return addCorsHeaders(res);
     }
 
