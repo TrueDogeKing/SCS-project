@@ -1,0 +1,40 @@
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - TTP_URL=http://ttp:3002
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../server/src:/app/server/src
+    command: bun run --cwd ./server src/index.ts
+
+  ttp:
+    build:
+      context: ..
+      dockerfile: ttp/Dockerfile
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3002:3002"
+    volumes:
+      - ../ttp/src:/app/ttp/src
+    command: bun run --cwd ./ttp src/index.ts
+
+  client:
+    build:
+      context: ..
+      dockerfile: client/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - VITE_SERVER_URL=http://localhost:3001
+      - VITE_TTP_URL=http://localhost:3002
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../client/src:/app/client/src
+      - ../client/public:/app/client/public
+    command: bun run --cwd ./client dev -- --host

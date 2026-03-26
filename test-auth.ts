@@ -150,7 +150,6 @@ async function testVerifyClient(clientCert: string) {
         clientId: "test_client_001",
         clientCertificate: clientCert,
         serverId: "test_server_001",
-        ttpUrl: TTP_URL,
       }),
     });
 
@@ -234,7 +233,7 @@ async function testFailureScenarios() {
       body: JSON.stringify({
         clientId: "nonexistent_client",
         serverId: "test_server_001",
-        ttpUrl: TTP_URL,
+        // Let server use TTP_URL environment variable
       }),
     });
 

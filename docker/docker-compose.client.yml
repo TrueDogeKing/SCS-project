@@ -1,0 +1,15 @@
+services:
+  client:
+    build:
+      context: ..
+      dockerfile: client/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - VITE_SERVER_URL=http://localhost:3001
+      - VITE_TTP_URL=http://localhost:3002
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../client/src:/app/client/src
+      - ../client/public:/app/client/public
+    command: bun run --cwd ./client dev -- --host

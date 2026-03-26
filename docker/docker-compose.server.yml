@@ -1,0 +1,13 @@
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - TTP_URL=http://ttp:3002
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../server/src:/app/server/src
+    command: bun run --cwd ./server src/index.ts
