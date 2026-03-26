@@ -1,5 +1,25 @@
 {
+  "name": "scs-project",
+  "version": "1.0.0",
+  "description": "SCS Project root",
+  "type": "module",
+  "scripts": {
+    "dev": "docker compose -f docker/docker-compose.dev.yml up",
+    "dev:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "server": "docker compose -f docker/docker-compose.server.yml up",
+    "ttp": "docker compose -f docker/docker-compose.ttp.yml up",
+    "client": "docker compose -f docker/docker-compose.client.yml up",
+    "build:server": "docker compose -f docker/docker-compose.server.yml build",
+    "build:ttp": "docker compose -f docker/docker-compose.ttp.yml build",
+    "build:client": "docker compose -f docker/docker-compose.client.yml build",
+    "build:all": "docker compose -f docker/docker-compose.server.yml build && docker compose -f docker/docker-compose.ttp.yml build && docker compose -f docker/docker-compose.client.yml build",
+    "all:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "server:down": "docker compose -f docker/docker-compose.server.yml down",
+    "ttp:down": "docker compose -f docker/docker-compose.ttp.yml down",
+    "client:down": "docker compose -f docker/docker-compose.client.yml down"
+  },
   "devDependencies": {
+    "bun-types": "^1.0.0",
     "@types/node": "^25.4.0"
   }
 }

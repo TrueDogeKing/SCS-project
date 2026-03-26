@@ -148,7 +148,7 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
 
     // Use default values if not provided
     const serverIdToUse = serverId || "server_001";
-    const ttpUrlToUse = ttpUrl || "http://localhost:3002";
+    const ttpUrlToUse = process.env.TTP_URL || "http://localhost:3002";
 
     logInfo("VERIFY_REQUEST", {
       clientId,
