@@ -8,7 +8,8 @@ React + TypeScript + Vite-based web client for the Secure Communication System. 
 - **TTP Registration**: Register client with Trusted Third Party and receive X.509 certificates
 - **Secure Authentication**: Multi-step authentication flow with certificate validation
 - **AES-256-GCM Encryption**: End-to-end message encryption with authenticated encryption
-- **Real-time Messaging**: Send and receive encrypted messages
+- **Auto-fetch Messaging**: Automatically fetch encrypted messages every 3 seconds when authenticated
+- **Real-time Messaging**: Send and receive encrypted messages seamlessly
 - **Live Logging**: Event log showing all cryptographic operations
 - **Configuration Panel**: Set custom server and TTP URLs
 
@@ -49,13 +50,13 @@ src/
 │   ├── ConfigPanel.tsx      # Server/TTP URL configuration
 │   ├── StatusBar.tsx        # Connection status display
 │   ├── LogPanel.tsx         # Event log viewer
-│   └── MessagingPanel.tsx   # Message sending/receiving UI
+│   └── MessagingPanel.tsx   # Message sending UI (auto-fetches incoming)
 ├── crypto/
 │   ├── rsa.ts              # RSA-4096 key generation & encryption/decryption
 │   ├── aes.ts              # AES-256-GCM message encryption/decryption  
 │   └── index.ts            # Crypto interface
 ├── hooks/
-│   └── useClient.ts        # Main client logic & state management
+│   └── useClient.ts        # Main client logic, state management & auto-fetch interval
 ├── api/
 │   └── index.ts            # HTTP requests to Server and TTP
 ├── App.tsx                 # Main React component

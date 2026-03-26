@@ -21,7 +21,6 @@ function App() {
     checkHealth,
     initialize,
     sendEncryptedMessage,
-    fetchMessages,
     clearLogs,
   } = useClient();
 
