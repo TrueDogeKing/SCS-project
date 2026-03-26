@@ -81,7 +81,6 @@ function App() {
             messages={messages}
             clientId={clientId}
             onSend={sendEncryptedMessage}
-            onFetch={fetchMessages}
             disabled={phase !== "authenticated"}
           />
         </div>

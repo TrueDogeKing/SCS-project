@@ -5,7 +5,6 @@ interface MessagingPanelProps {
   messages: DecryptedMessage[];
   clientId: string;
   onSend: (message: string) => void;
-  onFetch: () => void;
   disabled: boolean;
 }
 
@@ -13,7 +12,6 @@ export function MessagingPanel({
   messages,
   clientId,
   onSend,
-  onFetch,
   disabled,
 }: MessagingPanelProps) {
   const [input, setInput] = useState("");
@@ -35,6 +33,7 @@ export function MessagingPanel({
   return (
     <div className="panel messaging-panel">
       <h3>Encrypted Messaging (AES-256-GCM)</h3>
+      <p className="panel-desc">Messages auto-fetch every 3 seconds</p>
 
       <div className="messages-container">
         {messages.length === 0 ? (
@@ -78,13 +77,6 @@ export function MessagingPanel({
           disabled={disabled || !input.trim()}
         >
           Send
-        </button>
-        <button
-          className="btn-secondary"
-          onClick={onFetch}
-          disabled={disabled}
-        >
-          Fetch
         </button>
       </div>
     </div>
