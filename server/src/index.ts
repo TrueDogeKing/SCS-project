@@ -7,11 +7,46 @@ import { logInfo } from "./logInfo/index.js";
 import { handleServiceRequest, handleVerifyClient, handleSendMessage, handleReceiveMessage, handleSendToClient } from "./routes/index.js";
 import { getServerPublicKey } from "./keys.js";
 
+import { registerServerWithTTP } from "./registerWithTTP.js";
+
 const PORT = 3001;
 
 logInfo("SYSTEM_START", {
   message: `Server starting on port ${PORT}`,
 });
+
+// Register server with TTP on startup
+const SERVER_ID = "server_001";
+const SERVER_NAME = "Application Server";
+const TTP_URL = process.env.TTP_URL || "http://localhost:3002";
+
+async function tryRegisterWithTTP() {
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    try {
+      const res = await registerServerWithTTP(TTP_URL, SERVER_ID, SERVER_NAME);
+      if (res.success) {
+        logInfo("TTP_REGISTER", {
+          message: `Server registered with TTP (fingerprint: ${res.certificate?.fingerprint?.substring(0, 16) || "unknown"})`,
+        });
+        return;
+      } else {
+        logInfo("TTP_REGISTER", {
+          message: `TTP registration failed: ${res.error || "unknown error"}`,
+        });
+      }
+    } catch (err) {
+      logInfo("TTP_REGISTER", {
+        message: `TTP not available (attempt ${attempt}), retrying...`,
+      });
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  logInfo("TTP_REGISTER", {
+    message: "Failed to register with TTP after multiple attempts.",
+  });
+}
+
+tryRegisterWithTTP();
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",

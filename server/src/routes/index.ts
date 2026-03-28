@@ -9,6 +9,7 @@ import {
   verifyClientCertificate,
   authorizeServiceAccess,
   requestAuthenticationFromTTP,
+  requestServerAuthenticationFromTTP,
   requestSessionKeyFromTTP,
 } from "../auth/index.js";
 import { createSession } from "../session/index.js";
@@ -156,7 +157,41 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
       details: { serverId: serverIdToUse },
     });
 
-    // Step 1: Verify client certificate locally
+    // Step 1: Server authenticates itself with TTP
+    logInfo("VERIFICATION_STEP", {
+      clientId,
+      serverId: serverIdToUse,
+      message: "Server requesting self-authentication with TTP",
+    });
+
+    const serverAuthResult = await requestServerAuthenticationFromTTP(
+      ttpUrlToUse,
+      serverIdToUse
+    );
+    if (!serverAuthResult.success) {
+      logWarn("VERIFICATION_FAILED", {
+        clientId,
+        serverId: serverIdToUse,
+        message: "Server authentication failed",
+        details: { error: serverAuthResult.error || "Unknown error" },
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Server authentication failed: ${serverAuthResult.error}`,
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logSuccess("VERIFICATION_STEP", {
+      clientId,
+      serverId: serverIdToUse,
+      message: "Server authenticated successfully with TTP",
+    });
+
+    // Step 2: Verify client certificate locally
     const certVerification = await verifyClientCertificate(clientId, clientCertificate, ttpUrlToUse);
     if (!certVerification.success) {
       logWarn("VERIFICATION_FAILED", {
@@ -178,7 +213,7 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
       message: "Local certificate verification passed",
     });
 
-    // Step 2: Request authentication from TTP
+    // Step 3: Request authentication from TTP for the client
     const authResult = await requestAuthenticationFromTTP(
       ttpUrlToUse,
       clientId,
@@ -206,7 +241,7 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
       message: "TTP authentication successful",
     });
 
-    // Step 3: Request session key from TTP
+    // Step 4: Request session key from TTP
     const sessionKeyResult = await requestSessionKeyFromTTP(
       ttpUrlToUse,
       clientId,
@@ -233,7 +268,7 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
       message: "Session key received from TTP",
     });
 
-    // Step 4: Decrypt server's session key and create session
+    // Step 5: Decrypt server's session key and create session
     let decryptedSessionKey: string;
     try {
       decryptedSessionKey = decryptWithRSAPrivateKeyAsString(

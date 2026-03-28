@@ -8,6 +8,7 @@ import { logInfo } from "./logInfo";
 import {
   handleRegister,
   handleAuthenticate,
+  handleAuthenticateServer,
   handleValidateCertificate,
   handleSessionKey,
 } from "./routes";
@@ -64,6 +65,12 @@ const server = Bun.serve({
     // POST /authenticate - Authenticate client
     if (url.pathname === "/authenticate" && request.method === "POST") {
       const res = await handleAuthenticate(request, registry);
+      return addCorsHeaders(res);
+    }
+
+    // POST /authenticate-server - Authenticate server
+    if (url.pathname === "/authenticate-server" && request.method === "POST") {
+      const res = await handleAuthenticateServer(request, registry);
       return addCorsHeaders(res);
     }
 

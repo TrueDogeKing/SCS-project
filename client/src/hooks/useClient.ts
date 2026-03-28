@@ -9,7 +9,6 @@ import {
 import {
   registerWithTTP,
   verifyClient,
-  getServerPublicKey,
   sendMessage,
   receiveMessages,
   checkServerHealth,
@@ -96,30 +95,9 @@ export function useClient() {
 
       // Register server with TTP (fetch server's public key first)
       setPhase("registering");
-      addLog("Fetching server public key...");
-      const serverPubKey = await getServerPublicKey(config.serverUrl);
-      addLog("Server public key retrieved", "success");
-
-      addLog("Registering server with TTP...");
-      const serverReg = await registerWithTTP(
-        config.ttpUrl,
-        serverId,
-        "SERVER",
-        "Application Server",
-        serverPubKey
-      );
-      if (!serverReg.success) {
-        // It might already be registered, which is fine
-        addLog(`Server registration: ${serverReg.error || "already registered"}`, "warn");
-      } else {
-        addLog(
-          `Server registered with TTP (fingerprint: ${serverReg.certificate.fingerprint.substring(0, 16)}...)`,
-          "success"
-        );
-      }
-
-      // Register client with TTP
       addLog("Registering client with TTP...");
+      
+      // Register client with TTP
       const clientReg = await registerWithTTP(
         config.ttpUrl,
         clientId,

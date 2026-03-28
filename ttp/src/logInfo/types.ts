@@ -16,6 +16,7 @@ export type LogEventType =
   | "AUTH_ATTEMPT"
   | "AUTH_SUCCESS"
   | "AUTH_FAILED"
+  | "VERIFICATION_STEP"
   // Session key events
   | "SESSION_KEY_GENERATED"
   | "SESSION_KEY_FAILED"
@@ -42,6 +43,7 @@ export const SECURITY_EVENTS: ReadonlySet<LogEventType> = new Set<LogEventType>(
   "AUTH_ATTEMPT",
   "AUTH_SUCCESS",
   "AUTH_FAILED",
+  "VERIFICATION_STEP",
   "SESSION_KEY_GENERATED",
   "SESSION_KEY_FAILED",
   "CERT_ISSUED",
