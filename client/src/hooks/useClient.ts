@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import type { RSAKeyPair, EncryptedMessage } from "../crypto";
 import {
   generateRSAKeyPair,
@@ -264,6 +264,46 @@ export function useClient() {
       addLog(`Fetch error: ${msg}`, "error");
     }
   }, [sessionKey, clientId, serverId, config, addLog]);
+
+  // Automatic fetch messages on interval when authenticated
+  useEffect(() => {
+    if (phase !== "authenticated" || !sessionKey) {
+      return;
+    }
+
+    // Fetch immediately on first authentication
+    const performAutoFetch = async () => {
+      try {
+        const result = await receiveMessages(
+          config.serverUrl,
+          clientId,
+          serverId
+        );
+        if (result.success && result.messages && result.messages.length > 0) {
+          addLog(`Auto-fetched ${result.messages.length} message(s)`, "success");
+          const decrypted: DecryptedMessage[] = [];
+          for (const msg of result.messages) {
+            try {
+              const d = await decryptMessage(sessionKey, msg as EncryptedMessage);
+              decrypted.push(d);
+              addLog(`Decrypted message from ${d.from}: "${d.content}"`, "success");
+            } catch {
+              addLog("Failed to decrypt a message", "error");
+            }
+          }
+          setMessages((prev) => [...prev, ...decrypted]);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("Auto-fetch error:", msg);
+      }
+    };
+
+    // Set up interval to fetch messages every 3 seconds
+    const interval = setInterval(performAutoFetch, 3000);
+
+    return () => clearInterval(interval);
+  }, [phase, sessionKey, config, clientId, serverId, addLog]);
 
   const clearLogs = useCallback(() => setLogs([]), []);
 

@@ -21,7 +21,6 @@ function App() {
     checkHealth,
     initialize,
     sendEncryptedMessage,
-    fetchMessages,
     clearLogs,
   } = useClient();
 
@@ -81,7 +80,6 @@ function App() {
             messages={messages}
             clientId={clientId}
             onSend={sendEncryptedMessage}
-            onFetch={fetchMessages}
             disabled={phase !== "authenticated"}
           />
         </div>
