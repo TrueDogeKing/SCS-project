@@ -395,6 +395,106 @@ export async function handleAuthenticate(
 }
 
 /**
+ * Handle POST /authenticate-server requests
+ * Request body: { serverId, serverCertificate }
+ * Server authenticates itself with the TTP
+ */
+export async function handleAuthenticateServer(
+  request: Request,
+  registry: RegistryData
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { serverId: string; serverCertificate?: string };
+    const { serverId, serverCertificate } = body;
+
+    // Validate request
+    if (!serverId) {
+      logWarn("REQUEST_INVALID", {
+        message: "Server authentication request missing serverId",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Missing required field: serverId",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logInfo("AUTH_ATTEMPT", {
+      entityId: serverId,
+      entityType: "SERVER",
+      message: `Server authentication attempt for ${serverId}`,
+    });
+
+    // Check if server exists
+    const server = getEntity(registry, serverId);
+
+    if (!server) {
+      logWarn("AUTH_FAILED", {
+        entityId: serverId,
+        entityType: "SERVER",
+        message: "Server not found",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Server not found",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify server certificate validity
+    if (!verifyCertificateValidity(server.certificate)) {
+      logWarn("AUTH_FAILED", {
+        entityId: serverId,
+        message: "Server certificate is invalid or expired",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Server certificate is invalid or expired",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    logSuccess("AUTH_SUCCESS", {
+      entityId: serverId,
+      entityType: "SERVER",
+      message: `Server authentication successful for ${serverId}`,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Server authentication successful",
+        serverId,
+        status: "VERIFIED",
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logError("ERROR", {
+      message: `Server authentication handler error: ${message}`,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Internal server error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+
+/**
  * Handle POST /session-key requests
  * Request body: { clientId, serverId }
  * Note: Will return encrypted session keys once crypto is implemented

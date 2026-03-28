@@ -76,6 +76,63 @@ export async function verifyClientCertificate(
 }
 
 /**
+ * Request server authentication from TTP.
+ * Server authenticates itself using its certificate.
+ */
+export async function requestServerAuthenticationFromTTP(
+  ttpUrl: string,
+  serverId: string,
+  serverCertificate?: string
+): Promise<AuthResult> {
+  if (!serverId) {
+    return {
+      success: false,
+      error: "Server ID is required",
+    };
+  }
+
+  if (!ttpUrl) {
+    return {
+      success: false,
+      error: "TTP URL is required",
+    };
+  }
+
+  try {
+    const response = await fetch(`${ttpUrl}/authenticate-server`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        serverId,
+        serverCertificate,
+      }),
+    });
+
+    const data = (await response.json()) as any;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || "Server authentication failed",
+      };
+    }
+
+    return {
+      success: true,
+      message: data.message || "Server authenticated successfully",
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return {
+      success: false,
+      error: `Server authentication request failed: ${message}`,
+    };
+  }
+}
+
+/**
  * Request authentication from TTP
  * Makes HTTP POST request to TTP /authenticate endpoint
  */

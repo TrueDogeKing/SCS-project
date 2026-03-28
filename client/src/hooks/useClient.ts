@@ -9,14 +9,13 @@ import {
 import {
   registerWithTTP,
   verifyClient,
-  getServerPublicKey,
   sendMessage,
-  receiveMessages,
   checkServerHealth,
   checkTTPHealth,
   getConfig,
   saveConfig,
 } from "../api";
+import { WebSocketClient } from "../api/websocket";
 
 export type LogLevel = "info" | "success" | "error" | "warn";
 
@@ -54,6 +53,7 @@ export function useClient() {
   const [ttpOnline, setTtpOnline] = useState<boolean | null>(null);
 
   const keysRef = useRef<RSAKeyPair | null>(null);
+  const wsRef = useRef<WebSocketClient | null>(null);
 
   const addLog = useCallback((message: string, level: LogLevel = "info") => {
     setLogs((prev) => [
@@ -96,30 +96,9 @@ export function useClient() {
 
       // Register server with TTP (fetch server's public key first)
       setPhase("registering");
-      addLog("Fetching server public key...");
-      const serverPubKey = await getServerPublicKey(config.serverUrl);
-      addLog("Server public key retrieved", "success");
-
-      addLog("Registering server with TTP...");
-      const serverReg = await registerWithTTP(
-        config.ttpUrl,
-        serverId,
-        "SERVER",
-        "Application Server",
-        serverPubKey
-      );
-      if (!serverReg.success) {
-        // It might already be registered, which is fine
-        addLog(`Server registration: ${serverReg.error || "already registered"}`, "warn");
-      } else {
-        addLog(
-          `Server registered with TTP (fingerprint: ${serverReg.certificate.fingerprint.substring(0, 16)}...)`,
-          "success"
-        );
-      }
-
-      // Register client with TTP
       addLog("Registering client with TTP...");
+      
+      // Register client with TTP
       const clientReg = await registerWithTTP(
         config.ttpUrl,
         clientId,
@@ -127,8 +106,6 @@ export function useClient() {
         "React Client",
         keys.publicKeyPem
       );
-      console.log("[DEBUG] Client registration response:", clientReg);
-      console.log("[DEBUG] Public key PEM (first 100 chars):", keys.publicKeyPem.substring(0, 100));
       
       if (!clientReg.success) {
         throw new Error(`Client registration failed: ${clientReg.error}`);
@@ -149,7 +126,6 @@ export function useClient() {
         config.ttpUrl,
         clientReg.certificate.pem
       );
-      console.log("[DEBUG] verifyResult:", verifyResult);
       
       if (!verifyResult.success || !verifyResult.clientSessionKey) {
         throw new Error(`Authentication failed: ${verifyResult.error}`);
@@ -158,18 +134,15 @@ export function useClient() {
 
       // Decrypt session key with client's RSA private key
       addLog("Decrypting session key with RSA private key...");
-      addLog(`Encrypted key length: ${verifyResult.clientSessionKey?.length || 0} chars`, "info");
       
       if (!verifyResult.clientSessionKey) {
         throw new Error("No encrypted session key received from server");
       }
       
-      console.log("[DEBUG] About to decrypt with private key...");
       const decryptedKey = await rsaDecrypt(
         keys.privateKey,
         verifyResult.clientSessionKey
       );
-      console.log("[DEBUG] Decryption succeeded, key length:", decryptedKey.length);
       
       if (!decryptedKey) {
         throw new Error("RSA decryption returned empty result");
@@ -231,78 +204,52 @@ export function useClient() {
     [sessionKey, clientId, serverId, config, addLog]
   );
 
-  const fetchMessages = useCallback(async () => {
-    if (!sessionKey) {
-      addLog("No session key - authenticate first", "error");
-      return;
-    }
-    try {
-      addLog("Fetching messages from server...");
-      const result = await receiveMessages(
-        config.serverUrl,
-        clientId,
-        serverId
-      );
-      if (result.success && result.messages && result.messages.length > 0) {
-        addLog(`Received ${result.messages.length} message(s)`, "success");
-        const decrypted: DecryptedMessage[] = [];
-        for (const msg of result.messages) {
-          try {
-            const d = await decryptMessage(sessionKey, msg as EncryptedMessage);
-            decrypted.push(d);
-            addLog(`Decrypted message from ${d.from}: "${d.content}"`, "success");
-          } catch {
-            addLog("Failed to decrypt a message", "error");
-          }
-        }
-        setMessages((prev) => [...prev, ...decrypted]);
-      } else {
-        addLog("No new messages", "info");
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      addLog(`Fetch error: ${msg}`, "error");
-    }
-  }, [sessionKey, clientId, serverId, config, addLog]);
-
-  // Automatic fetch messages on interval when authenticated
+  // WebSocket connection for real-time message delivery
   useEffect(() => {
-    if (phase !== "authenticated" || !sessionKey) {
+    if (phase !== "authenticated" || !sessionKey || !config.serverUrl) {
       return;
     }
 
-    // Fetch immediately on first authentication
-    const performAutoFetch = async () => {
-      try {
-        const result = await receiveMessages(
-          config.serverUrl,
-          clientId,
-          serverId
-        );
-        if (result.success && result.messages && result.messages.length > 0) {
-          addLog(`Auto-fetched ${result.messages.length} message(s)`, "success");
-          const decrypted: DecryptedMessage[] = [];
-          for (const msg of result.messages) {
-            try {
-              const d = await decryptMessage(sessionKey, msg as EncryptedMessage);
-              decrypted.push(d);
-              addLog(`Decrypted message from ${d.from}: "${d.content}"`, "success");
-            } catch {
-              addLog("Failed to decrypt a message", "error");
-            }
+    // Create and connect WebSocket
+    const wsClient = new WebSocketClient({
+      serverUrl: config.serverUrl,
+      clientId,
+      serverId,
+      onMessage: async (msg) => {
+        if (msg.type === "MESSAGE" && msg.data) {
+          try {
+            const decrypted = await decryptMessage(sessionKey, msg.data as EncryptedMessage);
+            setMessages((prev) => [...prev, decrypted]);
+            addLog(`Received message from ${decrypted.from}: "${decrypted.content}"`, "success");
+          } catch (err) {
+            const error = err instanceof Error ? err.message : "Unknown error";
+            addLog(`Failed to decrypt received message: ${error}`, "error");
           }
-          setMessages((prev) => [...prev, ...decrypted]);
         }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error("Auto-fetch error:", msg);
+      },
+      onConnect: () => {
+        addLog("Connected to real-time message server", "success");
+      },
+      onDisconnect: () => {
+        addLog("Disconnected from message server", "warn");
+      },
+      onError: (error) => {
+        addLog(`WebSocket error: ${error}`, "warn");
+      },
+    });
+
+    wsClient.connect().catch(() => {
+      addLog("Failed to connect to WebSocket", "error");
+    });
+
+    wsRef.current = wsClient;
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.disconnect();
+        wsRef.current = null;
       }
     };
-
-    // Set up interval to fetch messages every 3 seconds
-    const interval = setInterval(performAutoFetch, 3000);
-
-    return () => clearInterval(interval);
   }, [phase, sessionKey, config, clientId, serverId, addLog]);
 
   const clearLogs = useCallback(() => setLogs([]), []);
@@ -322,7 +269,6 @@ export function useClient() {
     checkHealth,
     initialize,
     sendEncryptedMessage,
-    fetchMessages,
     clearLogs,
   };
 }

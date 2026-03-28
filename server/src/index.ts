@@ -7,11 +7,47 @@ import { logInfo } from "./logInfo/index.js";
 import { handleServiceRequest, handleVerifyClient, handleSendMessage, handleReceiveMessage, handleSendToClient } from "./routes/index.js";
 import { getServerPublicKey } from "./keys.js";
 
+import { registerServerWithTTP } from "./registerWithTTP.js";
+import { addConnection, removeConnection, broadcastMessage } from "./websocket/index.js";
+
 const PORT = 3001;
 
 logInfo("SYSTEM_START", {
   message: `Server starting on port ${PORT}`,
 });
+
+// Register server with TTP on startup
+const SERVER_ID = "server_001";
+const SERVER_NAME = "Application Server";
+const TTP_URL = process.env.TTP_URL || "http://localhost:3002";
+
+async function tryRegisterWithTTP() {
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    try {
+      const res = await registerServerWithTTP(TTP_URL, SERVER_ID, SERVER_NAME);
+      if (res.success) {
+        logInfo("TTP_REGISTER", {
+          message: `Server registered with TTP (fingerprint: ${res.certificate?.fingerprint?.substring(0, 16) || "unknown"})`,
+        });
+        return;
+      } else {
+        logInfo("TTP_REGISTER", {
+          message: `TTP registration failed: ${res.error || "unknown error"}`,
+        });
+      }
+    } catch (err) {
+      logInfo("TTP_REGISTER", {
+        message: `TTP not available (attempt ${attempt}), retrying...`,
+      });
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  logInfo("TTP_REGISTER", {
+    message: "Failed to register with TTP after multiple attempts.",
+  });
+}
+
+tryRegisterWithTTP();
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -21,8 +57,67 @@ const CORS_HEADERS = {
 
 const server = Bun.serve({
   port: PORT,
+  websocket: {
+    open(ws: any) {
+      // WebSocket connection opened
+      const clientId = ws.data?.clientId;
+      const serverId = ws.data?.serverId;
+
+      if (!clientId || !serverId) {
+        ws.close(1008, "Missing clientId or serverId");
+        return;
+      }
+
+      logInfo("SYSTEM_START", {
+        message: `WebSocket client connected: ${clientId}`,
+      });
+
+      addConnection(clientId, serverId, ws);
+    },
+
+    message(ws: any, message: string | Buffer) {
+      // Handle incoming messages
+      try {
+        const clientId = ws.data?.clientId;
+        const serverId = ws.data?.serverId;
+
+        if (typeof message === "string") {
+          const data = JSON.parse(message);
+          
+          if (data.type === "MESSAGE" && clientId && serverId) {
+            // Relay encrypted message to client
+            broadcastMessage(clientId, serverId, data.data);
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        logInfo("SYSTEM_START", {
+          message: `WebSocket message error: ${msg}`,
+        });
+      }
+    },
+
+    close(ws: any) {
+      // WebSocket connection closed
+      const clientId = ws.data?.clientId;
+      const serverId = ws.data?.serverId;
+
+      if (clientId && serverId) {
+        removeConnection(clientId, serverId);
+      }
+    },
+  },
   async fetch(request) {
     const url = new URL(request.url);
+
+    // Upgrade to WebSocket if /ws endpoint
+    if (url.pathname === "/ws") {
+      const clientId = url.searchParams.get("clientId");
+      const serverId = url.searchParams.get("serverId");
+      if (server.upgrade(request, { data: { clientId, serverId } } as any)) {
+        return;
+      }
+    }
 
     // Handle CORS preflight
     if (request.method === "OPTIONS") {

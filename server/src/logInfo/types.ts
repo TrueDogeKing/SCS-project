@@ -12,6 +12,8 @@ export type LogEventType =
   | "SERVICE_REQUEST"
   | "REQUEST_RECEIVED"
   | "REQUEST_INVALID"
+  // TTP registration
+  | "TTP_REGISTER"
   // Authentication / verification events
   | "VERIFY_REQUEST"
   | "VERIFICATION_STEP"
@@ -48,6 +50,7 @@ export type LogEventType =
 
 /** Events classified as security-relevant (written to the security log) */
 export const SECURITY_EVENTS: ReadonlySet<LogEventType> = new Set<LogEventType>([
+  "TTP_REGISTER",
   "AUTH_ATTEMPT",
   "AUTH_SUCCESS",
   "AUTH_FAILED",

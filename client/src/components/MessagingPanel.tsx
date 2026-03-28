@@ -33,7 +33,7 @@ export function MessagingPanel({
   return (
     <div className="panel messaging-panel">
       <h3>Encrypted Messaging (AES-256-GCM)</h3>
-      <p className="panel-desc">Messages auto-fetch every 3 seconds</p>
+      <p className="panel-desc">Messages delivered via websocket</p>
 
       <div className="messages-container">
         {messages.length === 0 ? (

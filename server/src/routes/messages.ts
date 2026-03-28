@@ -7,6 +7,9 @@ import { SendMessageBody, ReceiveMessageBody, SendMessageResponse, ReceiveMessag
 import { getSession, createSession, updateSessionActivity } from "../session/index.js";
 import { decryptMessage, encryptMessage, isValidEncryptedMessage } from "../session/messaging.js";
 import { EncryptedMessage, DecryptedMessage } from "../session/types.js";
+import { broadcastMessage } from "../websocket/index.js";
+
+const SERVER_ID = "server_001";
 
 // In-memory message queue (in production, use a database)
 // Key: "clientId:serverId" -> array of messages
@@ -107,7 +110,21 @@ export async function handleSendMessage(request: Request): Promise<Response> {
       details: { serverId },
     });
 
-    // Store message for potential queuing
+    // Modify message by appending "-server"
+    const modifiedContent = `${decryptedMsg.content}-server`;
+    logInfo("MESSAGE_RECEIVED", {
+      clientId,
+      message: `Message modified: "${decryptedMsg.content}" → "${modifiedContent}"`,
+    });
+
+    // Re-encrypt the modified message with swapped from/to (server sends back to client)
+    const reencryptedMessage = encryptMessage(session.sessionKey, modifiedContent, SERVER_ID, clientId);
+    logSuccess("MESSAGE_ENCRYPTED", {
+      clientId,
+      message: "Modified message re-encrypted with AES-256-GCM",
+    });
+
+    // Store original message for potential queuing
     const queueKey = `${clientId}:${serverId}`;
     if (!messageQueue.has(queueKey)) {
       messageQueue.set(queueKey, []);
@@ -119,11 +136,12 @@ export async function handleSendMessage(request: Request): Promise<Response> {
 
     logSuccess("MESSAGE_STORED", {
       clientId,
-      message: "Encrypted message processed and stored",
-      details: { serverId, contentPreview: decryptedMsg.content.substring(0, 50) },
+      message: "Message processed and stored",
+      details: { serverId, originalContent: decryptedMsg.content, modifiedContent },
     });
 
-    return new Response(
+    // Send HTTP response immediately (confirms receipt via TCP acknowledgment)
+    const response = new Response(
       JSON.stringify({
         success: true,
         message: "Message received and decrypted successfully",
@@ -132,6 +150,10 @@ export async function handleSendMessage(request: Request): Promise<Response> {
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
+    setTimeout(() => {
+      broadcastMessage(clientId, serverId, reencryptedMessage);
+    }, 100);
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logError("ERROR", {
