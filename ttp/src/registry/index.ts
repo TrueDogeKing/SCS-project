@@ -1,8 +1,3 @@
-/**
- * Entity registry for TTP
- * Stores client and server information
- */
-
 import { Certificate } from "../crypto";
 
 export interface RegisteredEntity {

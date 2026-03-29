@@ -1,8 +1,3 @@
-/**
- * RSA cryptography utilities
- * Implements RSA 4096-bit key generation and encryption/decryption
- */
-
 import { generateKeyPairSync, publicEncrypt, privateDecrypt } from "crypto";
 import { RSAKeyPair } from "./types";
 

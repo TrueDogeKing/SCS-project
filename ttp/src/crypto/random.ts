@@ -1,8 +1,3 @@
-/**
- * Secure random utilities
- * Implements cryptographically secure random number generation
- */
-
 import { randomBytes } from "crypto";
 
 export function generateRandomBytes(length: number): string {

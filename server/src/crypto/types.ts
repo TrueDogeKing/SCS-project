@@ -1,7 +1,3 @@
-/**
- * Cryptographic type definitions
- */
-
 export interface RSAKeyPair {
   publicKey: string; 
   privateKey: string; 

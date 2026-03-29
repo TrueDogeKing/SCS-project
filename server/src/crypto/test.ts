@@ -1,8 +1,3 @@
-/**
- * Crypto utilities test file
- * Demonstrates and tests all cryptographic functions
- */
-
 import {
   generateRSAKeyPair,
   encryptWithRSAPublicKey,

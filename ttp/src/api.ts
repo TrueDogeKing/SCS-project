@@ -1,8 +1,3 @@
-/**
- * SCS Project - Trusted Third Party
- * Authentication Authority and Session Key Distributor
- */
-
 import { createRegistry } from "./registry";
 import { logInfo } from "./logInfo";
 import {

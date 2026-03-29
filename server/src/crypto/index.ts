@@ -1,9 +1,3 @@
-/**
- * Cryptography utilities module
- * Exports all cryptographic functions for RSA, AES, hashing, and random generation
- */
-
-// Type definitions
 export * from "./types.js";
 
 // RSA utilities

@@ -1,7 +1,3 @@
-/**
- * API service for communicating with Server and TTP
- */
-
 import type { EncryptedMessage } from "../crypto";
 
 const DEFAULT_SERVER_URL = "http://localhost:3001";

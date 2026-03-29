@@ -1,8 +1,3 @@
-/**
- * Certificate generation utilities for TTP
- * Generates self-signed X.509 certificates for clients and servers
- */
-
 import * as forge from "node-forge";
 import { generateSHA256ID } from "./hash";
 import { Certificate } from "./types";

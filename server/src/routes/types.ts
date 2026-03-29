@@ -1,10 +1,5 @@
-/**
- * Server API request/response type definitions
- */
-
 import { EncryptedMessage } from "../session/types.js";
 
-// Service request endpoint types
 export interface ServiceRequestBody {
   clientId: string;
   serviceType: string;
@@ -19,7 +14,6 @@ export interface ServiceRequestResponse {
   status?: string;
 }
 
-// Verify endpoint types
 export interface VerifyRequestBody {
   clientId: string;
   clientCertificate?: string;
@@ -34,7 +28,6 @@ export interface VerifyResponse {
   verified?: boolean;
 }
 
-// Message endpoints types
 export interface SendMessageBody {
   clientId: string;
   serverId: string;

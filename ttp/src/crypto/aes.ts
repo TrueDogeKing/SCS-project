@@ -1,8 +1,3 @@
-/**
- * AES-256 encryption utilities
- * Implements AES-256-GCM for authenticated encryption
- */
-
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { EncryptedData } from "./types";
 
