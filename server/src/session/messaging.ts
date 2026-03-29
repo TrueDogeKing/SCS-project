@@ -1,7 +1,3 @@
-/**
- * Message encryption/decryption utilities for AES-256 encrypted messaging
- */
-
 import { encryptAES256, decryptAES256AsString, EncryptedData } from "../crypto/index.js";
 import { EncryptedMessage, DecryptedMessage } from "./types.js";
 

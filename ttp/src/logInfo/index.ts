@@ -1,9 +1,3 @@
-/**
- * TTP Logging utilities
- * Writes timestamped security events to daily-rotated log files.
- *
- */
-
 import { appendFileSync, existsSync, mkdirSync } from "fs";
 import { resolve } from "path";
 import { LogEntry, LogLevel, LogEventType, SECURITY_EVENTS } from "./types";

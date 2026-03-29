@@ -1,7 +1,3 @@
-/**
- * RSA 4096-bit key pair generation and operations using Web Crypto API
- */
-
 export interface RSAKeyPair {
   publicKey: CryptoKey;
   privateKey: CryptoKey;

@@ -1,7 +1,3 @@
-/**
- * AES-256-GCM encryption/decryption using Web Crypto API
- */
-
 export interface EncryptedData {
   ciphertext: string; // base64
   iv: string;         // base64

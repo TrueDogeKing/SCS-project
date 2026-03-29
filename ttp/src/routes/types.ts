@@ -1,10 +1,5 @@
-/**
- * TTP API request/response type definitions
- */
-
 import { Certificate } from "../crypto";
 
-// Register endpoint types
 export interface RegisterRequest {
   id: string;
   type: "CLIENT" | "SERVER";
@@ -35,7 +30,6 @@ export interface AuthenticateResponse {
   serverId?: string;
 }
 
-// Certificate validation endpoint types
 export interface ValidateCertificateRequest {
   clientId: string;
   clientCertificate: string;
@@ -48,7 +42,6 @@ export interface ValidateCertificateResponse {
   clientId?: string;
 }
 
-// Session key endpoint types
 export interface SessionKeyRequest {
   clientId: string;
   serverId: string;

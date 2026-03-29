@@ -1,8 +1,3 @@
-/**
- * Session management utility
- * Manages active sessions between clients and servers
- */
-
 import { hashSHA256Hex } from "../crypto/index.js";
 import { Session } from "./types.js";
 

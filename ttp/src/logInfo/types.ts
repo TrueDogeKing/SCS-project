@@ -1,7 +1,3 @@
-/**
- * Logging types and interfaces
- */
-
 export type LogLevel = "INFO" | "WARN" | "ERROR" | "SUCCESS";
 
 export type LogEventType =
@@ -38,7 +34,6 @@ export type LogEventType =
   // General
   | "ERROR";
 
-/** Events classified as security-relevant (written to the security log) */
 export const SECURITY_EVENTS: ReadonlySet<LogEventType> = new Set<LogEventType>([
   "AUTH_ATTEMPT",
   "AUTH_SUCCESS",

@@ -1,8 +1,3 @@
-/**
- * SHA-256 hashing utilities
- * Implements SHA-256 for generating IDs and fingerprints
- */
-
 import { createHash } from "crypto";
 import { HashResult } from "./types";
 

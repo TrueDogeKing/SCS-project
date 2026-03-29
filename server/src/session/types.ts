@@ -1,8 +1,3 @@
-/**
- * Session management types
- * Stores active sessions between client and server
- */
-
 export interface Session {
   id: string; // Session ID (hash of clientId + serverId)
   clientId: string;
