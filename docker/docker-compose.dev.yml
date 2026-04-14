@@ -10,7 +10,7 @@ services:
       - "3001:3001"
     volumes:
       - ../server/src:/app/server/src
-    command: bun run --cwd ./server src/index.ts
+    command: bun run --cwd ./server src/api.ts
 
   ttp:
     build:
@@ -22,7 +22,7 @@ services:
       - "3002:3002"
     volumes:
       - ../ttp/src:/app/ttp/src
-    command: bun run --cwd ./ttp src/index.ts
+    command: bun run --cwd ./ttp src/api.ts
 
   client:
     build:

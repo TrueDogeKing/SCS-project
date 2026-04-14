@@ -12,5 +12,5 @@ COPY server/tsconfig.json ./server/
 
 EXPOSE 3001
 
-CMD ["bun", "run", "--cwd", "./server", "src/index.ts"]
+CMD ["bun", "run", "--cwd", "./server", "src/api.ts"]
 
