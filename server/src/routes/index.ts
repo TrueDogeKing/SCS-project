@@ -1,6 +1,7 @@
 /**
  * Server API routes
  * Implements POST /service-request and POST /verify-client endpoints
+ * Message handling is now done via WebSocket only
  */
 
 import { logInfo, logWarn, logError, logSuccess } from "../logInfo/index.js";
@@ -17,7 +18,7 @@ import { decryptWithRSAPrivateKeyAsString } from "../crypto/index.js";
 import { getServerPrivateKey } from "../keys.js";
 
 // Re-export message handlers
-export { handleSendMessage, handleReceiveMessage, handleSendToClient } from "./messages.js";
+export { handleSendMessage, handleReceiveMessage, handleSendToClient, processIncomingMessage } from "./messages.js";
 
 /**
  * Handle POST /service-request requests

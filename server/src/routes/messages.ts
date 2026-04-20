@@ -15,6 +15,94 @@ const SERVER_ID = "server_001";
 // Key: "clientId:serverId" -> array of messages
 const messageQueue = new Map<string, EncryptedMessage[]>();
 
+export async function processIncomingMessage(
+  clientId: string,
+  serverId: string,
+  encryptedMessage: EncryptedMessage,
+  sessionKey?: string
+): Promise<{ success: boolean; messageId?: string; reencryptedMessage?: EncryptedMessage; error?: string }> {
+  if (!isValidEncryptedMessage(encryptedMessage)) {
+    logWarn("REQUEST_INVALID", {
+      clientId,
+      message: "Invalid encrypted message format",
+    });
+    return { success: false, error: "Invalid encrypted message format" };
+  }
+
+  logInfo("MESSAGE_RECEIVED", {
+    clientId,
+    message: "Encrypted message received from client",
+    details: { serverId, messageLen: encryptedMessage.ciphertext.length },
+  });
+
+  // Get or use provided session key
+  let session = getSession(clientId, serverId);
+  if (!session && sessionKey) {
+    session = createSession(clientId, serverId, sessionKey);
+  }
+
+  if (!session) {
+    logWarn("SESSION_ERROR", {
+      clientId,
+      message: "No active session found",
+      details: { serverId },
+    });
+    return { success: false, error: "No active session. Please authenticate first." };
+  }
+
+  // Decrypt message
+  let decryptedMsg: DecryptedMessage;
+  try {
+    decryptedMsg = decryptMessage(session.sessionKey, encryptedMessage);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    logError("DECRYPTION_FAILED", {
+      clientId,
+      message: `Message decryption failed: ${msg}`,
+    });
+    return { success: false, error: "Message decryption failed" };
+  }
+
+  logSuccess("MESSAGE_DECRYPTED", {
+    clientId,
+    message: `Message decrypted successfully (${decryptedMsg.content.length} bytes)`,
+    details: { serverId },
+  });
+
+  // Modify message by appending "-server"
+  const modifiedContent = `${decryptedMsg.content}-server`;
+  logInfo("MESSAGE_RECEIVED", {
+    clientId,
+    message: `Message modified: "${decryptedMsg.content}" → "${modifiedContent}"`,
+  });
+
+  // Re-encrypt the modified message with swapped from/to
+  const reencryptedMessage = encryptMessage(session.sessionKey, modifiedContent, SERVER_ID, clientId);
+  logSuccess("MESSAGE_ENCRYPTED", {
+    clientId,
+    message: "Modified message re-encrypted with AES-256-GCM",
+  });
+
+  // Store original message for potential queuing
+  const queueKey = `${clientId}:${serverId}`;
+  if (!messageQueue.has(queueKey)) {
+    messageQueue.set(queueKey, []);
+  }
+  messageQueue.get(queueKey)!.push(encryptedMessage);
+
+  // Update session activity
+  updateSessionActivity(clientId, serverId);
+
+  const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  logSuccess("MESSAGE_STORED", {
+    clientId,
+    message: "Message processed and stored",
+    details: { serverId, originalContent: decryptedMsg.content, modifiedContent },
+  });
+
+  return { success: true, messageId, reencryptedMessage };
+}
+
 /**
  * Handle POST /message/send - Client sends encrypted message to server
  * Request body: { clientId, serverId, encryptedMessage, sessionKey? }
@@ -40,119 +128,36 @@ export async function handleSendMessage(request: Request): Promise<Response> {
       );
     }
 
-    if (!isValidEncryptedMessage(encryptedMessage)) {
-      logWarn("REQUEST_INVALID", {
-        clientId,
-        message: "Invalid encrypted message format",
-      });
+    const result = await processIncomingMessage(clientId, serverId, encryptedMessage, sessionKey);
 
+    if (!result.success) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Invalid encrypted message format",
+          error: result.error,
         }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: result.error === "No active session. Please authenticate first." ? 401 : 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    logInfo("MESSAGE_RECEIVED", {
-      clientId,
-      message: "Encrypted message received from client",
-      details: { serverId, messageLen: encryptedMessage.ciphertext.length },
-    });
-
-    // Get or use provided session key
-    let session = getSession(clientId, serverId);
-    if (!session && sessionKey) {
-      // Create session if not exists but key provided
-      session = createSession(clientId, serverId, sessionKey);
-    }
-
-    if (!session) {
-      logWarn("SESSION_ERROR", {
-        clientId,
-        message: "No active session found",
-        details: { serverId },
-      });
-
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "No active session. Please authenticate first.",
-        }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Decrypt message
-    let decryptedMsg: DecryptedMessage;
-    try {
-      decryptedMsg = decryptMessage(session.sessionKey, encryptedMessage);
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "Unknown error";
-      logError("DECRYPTION_FAILED", {
-        clientId,
-        message: `Message decryption failed: ${msg}`,
-      });
-
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Message decryption failed",
-        }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    logSuccess("MESSAGE_DECRYPTED", {
-      clientId,
-      message: `Message decrypted successfully (${decryptedMsg.content.length} bytes)`,
-      details: { serverId },
-    });
-
-    // Modify message by appending "-server"
-    const modifiedContent = `${decryptedMsg.content}-server`;
-    logInfo("MESSAGE_RECEIVED", {
-      clientId,
-      message: `Message modified: "${decryptedMsg.content}" → "${modifiedContent}"`,
-    });
-
-    // Re-encrypt the modified message with swapped from/to (server sends back to client)
-    const reencryptedMessage = encryptMessage(session.sessionKey, modifiedContent, SERVER_ID, clientId);
-    logSuccess("MESSAGE_ENCRYPTED", {
-      clientId,
-      message: "Modified message re-encrypted with AES-256-GCM",
-    });
-
-    // Store original message for potential queuing
-    const queueKey = `${clientId}:${serverId}`;
-    if (!messageQueue.has(queueKey)) {
-      messageQueue.set(queueKey, []);
-    }
-    messageQueue.get(queueKey)!.push(encryptedMessage);
-
-    // Update session activity
-    updateSessionActivity(clientId, serverId);
-
-    logSuccess("MESSAGE_STORED", {
-      clientId,
-      message: "Message processed and stored",
-      details: { serverId, originalContent: decryptedMsg.content, modifiedContent },
-    });
-
-    // Send HTTP response immediately (confirms receipt via TCP acknowledgment)
+    // Send HTTP response immediately
     const response = new Response(
       JSON.stringify({
         success: true,
         message: "Message received and decrypted successfully",
-        messageId: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        messageId: result.messageId,
         timestamp: new Date().toISOString(),
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
-    setTimeout(() => {
-      broadcastMessage(clientId, serverId, reencryptedMessage);
-    }, 100);
+
+    // Broadcast response via WebSocket after a short delay
+    if (result.reencryptedMessage) {
+      setTimeout(() => {
+        broadcastMessage(clientId, serverId, result.reencryptedMessage!);
+      }, 100);
+    }
+
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

@@ -1,5 +1,3 @@
-import type { EncryptedMessage } from "../crypto";
-
 const DEFAULT_SERVER_URL = "http://localhost:3001";
 const DEFAULT_TTP_URL = "http://localhost:3002";
 
@@ -80,28 +78,6 @@ export async function getServerPublicKey(serverUrl: string): Promise<string> {
   const data = await res.json();
   return data.publicKey;
 }
-
-export interface SendMessageResponse {
-  success: boolean;
-  messageId?: string;
-  timestamp?: string;
-  error?: string;
-}
-
-export async function sendMessage(
-  serverUrl: string,
-  clientId: string,
-  serverId: string,
-  encryptedMessage: EncryptedMessage
-): Promise<SendMessageResponse> {
-  const res = await fetch(`${serverUrl}/message/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ clientId, serverId, encryptedMessage }),
-  });
-  return res.json();
-}
-
 
 export async function checkServerHealth(serverUrl: string): Promise<boolean> {
   try {

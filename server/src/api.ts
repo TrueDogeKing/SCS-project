@@ -3,8 +3,8 @@
  * Provides service to authenticated clients
  */
 
-import { logInfo } from "./logInfo/index.js";
-import { handleServiceRequest, handleVerifyClient, handleSendMessage, handleReceiveMessage, handleSendToClient } from "./routes/index.js";
+import { logInfo, logSuccess, logError } from "./logInfo/index.js";
+import { handleServiceRequest, handleVerifyClient, processIncomingMessage } from "./routes/index.js";
 import { getServerPublicKey } from "./keys.js";
 
 import { registerServerWithTTP } from "./registerWithTTP.js";
@@ -81,17 +81,37 @@ const server = Bun.serve({
         const clientId = ws.data?.clientId;
         const serverId = ws.data?.serverId;
 
-        if (typeof message === "string") {
+        if (typeof message === "string" && clientId && serverId) {
           const data = JSON.parse(message);
           
-          if (data.type === "MESSAGE" && clientId && serverId) {
-            // Relay encrypted message to client
-            broadcastMessage(clientId, serverId, data.data);
+          if (data.encryptedMessage) {
+            logInfo("MESSAGE_RECEIVED", {
+              clientId,
+              message: "Encrypted message received via WebSocket",
+            });
+            
+            processIncomingMessage(clientId, serverId, data.encryptedMessage).then((result) => {
+              if (result.success && result.reencryptedMessage) {
+                logSuccess("MESSAGE_ENCRYPTED", {
+                  clientId,
+                  message: "Broadcasting re-encrypted message back to client",
+                });
+                
+                setTimeout(() => {
+                  broadcastMessage(clientId, serverId, result.reencryptedMessage!);
+                }, 100);
+              } else {
+                logError("ERROR", {
+                  clientId,
+                  message: `Message processing failed: ${result.error}`,
+                });
+              }
+            });
           }
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";
-        logInfo("SYSTEM_START", {
+        logError("ERROR", {
           message: `WebSocket message error: ${msg}`,
         });
       }
@@ -146,24 +166,6 @@ const server = Bun.serve({
     // POST /verify-client - Server verifies client
     if (url.pathname === "/verify-client" && request.method === "POST") {
       const res = await handleVerifyClient(request);
-      return addCorsHeaders(res);
-    }
-
-    // POST /message/send - Client sends encrypted message to server
-    if (url.pathname === "/message/send" && request.method === "POST") {
-      const res = await handleSendMessage(request);
-      return addCorsHeaders(res);
-    }
-
-    // POST /message/receive - Client receives encrypted messages
-    if (url.pathname === "/message/receive" && request.method === "POST") {
-      const res = await handleReceiveMessage(request);
-      return addCorsHeaders(res);
-    }
-
-    // POST /message/send-to-client - Server sends encrypted message to client
-    if (url.pathname === "/message/send-to-client" && request.method === "POST") {
-      const res = await handleSendToClient(request);
       return addCorsHeaders(res);
     }
 

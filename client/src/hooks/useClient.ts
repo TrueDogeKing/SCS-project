@@ -9,7 +9,6 @@ import {
 import {
   registerWithTTP,
   verifyClient,
-  sendMessage,
   checkServerHealth,
   checkTTPHealth,
   getConfig,
@@ -166,6 +165,10 @@ export function useClient() {
         addLog("No session key - authenticate first", "error");
         return;
       }
+      if (!wsRef.current || !wsRef.current.isConnected()) {
+        addLog("WebSocket not connected - cannot send message", "error");
+        return;
+      }
       try {
         addLog(`Encrypting message: "${plaintext}"`);
         const encrypted = await encryptMessage(
@@ -176,32 +179,24 @@ export function useClient() {
         );
         addLog("Message encrypted with AES-256-GCM", "success");
 
-        const result = await sendMessage(
-          config.serverUrl,
-          clientId,
-          serverId,
-          encrypted
-        );
-        if (result.success) {
-          addLog(`Message sent (ID: ${result.messageId})`, "success");
-          setMessages((prev) => [
-            ...prev,
-            {
-              content: plaintext,
-              from: clientId,
-              to: serverId,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-        } else {
-          addLog(`Send failed: ${result.error}`, "error");
-        }
+        // Send encrypted message via WebSocket
+        wsRef.current.sendEncryptedMessage(encrypted);
+        addLog("Message sent via WebSocket", "success");
+        setMessages((prev) => [
+          ...prev,
+          {
+            content: plaintext,
+            from: clientId,
+            to: serverId,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         addLog(`Send error: ${msg}`, "error");
       }
     },
-    [sessionKey, clientId, serverId, config, addLog]
+    [sessionKey, clientId, serverId, addLog]
   );
 
   // WebSocket connection for real-time message delivery

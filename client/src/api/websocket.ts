@@ -4,6 +4,10 @@ export interface WebSocketMessage {
   timestamp?: string;
 }
 
+export interface EncryptedMessagePayload {
+  encryptedMessage: any;
+}
+
 export interface WebSocketConfig {
   serverUrl: string;
   clientId: string;
@@ -88,6 +92,18 @@ export class WebSocketClient {
   send(message: WebSocketMessage): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
+    } else {
+      this.config.onError("WebSocket not connected");
+    }
+  }
+
+  sendEncryptedMessage(encryptedMessage: any): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(
+        JSON.stringify({
+          encryptedMessage: encryptedMessage,
+        })
+      );
     } else {
       this.config.onError("WebSocket not connected");
     }
