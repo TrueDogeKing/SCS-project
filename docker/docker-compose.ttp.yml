@@ -9,4 +9,4 @@ services:
       - "3002:3002"
     volumes:
       - ../ttp/src:/app/ttp/src
-    command: bun run --cwd ./ttp src/index.ts
+    command: [ "bun", "run", "--cwd", "./ttp", "src/api.ts" ]
