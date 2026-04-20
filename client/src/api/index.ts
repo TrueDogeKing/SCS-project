@@ -102,25 +102,6 @@ export async function sendMessage(
   return res.json();
 }
 
-export interface ReceiveMessagesResponse {
-  success: boolean;
-  messages?: EncryptedMessage[];
-  message?: string;
-  error?: string;
-}
-
-export async function receiveMessages(
-  serverUrl: string,
-  clientId: string,
-  serverId: string
-): Promise<ReceiveMessagesResponse> {
-  const res = await fetch(`${serverUrl}/message/receive`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ clientId, serverId }),
-  });
-  return res.json();
-}
 
 export async function checkServerHealth(serverUrl: string): Promise<boolean> {
   try {

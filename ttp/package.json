@@ -2,10 +2,10 @@
     "name": "scs-ttp",
     "version": "1.0.0",
     "description": "SCS Project - Trusted Third Party",
-    "main": "src/index.ts",
+    "main": "src/api.ts",
     "type": "module",
     "scripts": {
-        "dev": "bun run src/index.ts",
+        "dev": "bun run src/api.ts",
         "build": "tsc",
         "test:api": "bun run tests/api.test.ts"
     },

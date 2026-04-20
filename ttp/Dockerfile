@@ -12,5 +12,5 @@ COPY ttp/tsconfig.json ./ttp/
 
 EXPOSE 3002
 
-CMD ["bun", "run", "--cwd", "./ttp", "src/index.ts"]
+CMD ["bun", "run", "--cwd", "./ttp", "src/api.ts"]
 

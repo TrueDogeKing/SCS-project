@@ -2,10 +2,10 @@
     "name": "scs-server",
     "version": "1.0.0",
     "description": "SCS Project - Server Component",
-    "main": "src/index.ts",
+    "main": "src/api.ts",
     "type": "module",
     "scripts": {
-        "dev": "bun run src/index.ts",
+        "dev": "bun run src/api.ts",
         "build": "tsc",
         "test:crypto": "bun run src/crypto/test.ts",
         "test:api": "bun run tests/api.test.ts"
