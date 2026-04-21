@@ -2,7 +2,7 @@
  * Message handlers for encrypted client-server communication
  */
 
-import { logInfo, logWarn, logError, logSuccess } from "../logInfo/index.js";
+import { logInfo, logWarn, logError, logSuccess } from "../logInfo/logger.js";
 import { SendMessageBody, ReceiveMessageBody, SendMessageResponse, ReceiveMessageResponse } from "../types/types.js";
 import { getSession, createSession, updateSessionActivity } from "../session/index.js";
 import { decryptMessage, encryptMessage, isValidEncryptedMessage } from "../session/messaging.js";
@@ -13,6 +13,7 @@ import {
   MAX_POST_BODY_BYTES,
   parseJsonBodyWithLimit,
 } from "../limits.js";
+import { checkHttpRateLimit, makeRateLimitResponse } from "../rateLimit.js";
 
 const SERVER_ID = "server_001";
 
@@ -135,6 +136,11 @@ export async function handleSendMessage(request: Request): Promise<Response> {
     const body = bodyResult.body;
     const { clientId, serverId, encryptedMessage, sessionKey } = body;
 
+    const rateLimit = checkHttpRateLimit(request, "message-send", clientId);
+    if (!rateLimit.allowed) {
+      return makeRateLimitResponse(rateLimit.retryAfterSeconds, "Too many send message requests.");
+    }
+
     // Validate request
     if (!clientId || !serverId) {
       logWarn("REQUEST_INVALID", {
@@ -211,6 +217,11 @@ export async function handleReceiveMessage(request: Request): Promise<Response> 
 
     const body = bodyResult.body;
     const { clientId, serverId } = body;
+
+    const rateLimit = checkHttpRateLimit(request, "message-receive", clientId);
+    if (!rateLimit.allowed) {
+      return makeRateLimitResponse(rateLimit.retryAfterSeconds, "Too many receive message requests.");
+    }
 
     // Validate request
     if (!clientId || !serverId) {
@@ -308,6 +319,11 @@ export async function handleSendToClient(request: Request): Promise<Response> {
 
     const body = bodyResult.body;
     const { clientId, serverId, encryptedMessage, sessionKey } = body;
+
+    const rateLimit = checkHttpRateLimit(request, "message-send-to-client", clientId);
+    if (!rateLimit.allowed) {
+      return makeRateLimitResponse(rateLimit.retryAfterSeconds, "Too many send-to-client requests.");
+    }
 
     // Validate request
     if (!clientId || !serverId) {

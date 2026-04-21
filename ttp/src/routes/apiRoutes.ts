@@ -4,7 +4,7 @@
  */
 
 import * as forge from "node-forge";
-import { logInfo, logSuccess, logWarn, logError } from "../logInfo";
+import { logInfo, logSuccess, logWarn, logError } from "../logInfo/logger";
 import { RegistryData, registerEntity, getEntity } from "../registry";
 import {
   RegisterRequest,

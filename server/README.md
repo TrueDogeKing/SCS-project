@@ -252,6 +252,13 @@ TTP_URL=http://localhost:3002
 
 # Key management
 SERVER_KEY_PATH=path/to/private/key.pem  # Overwrites default
+
+# Rate limiting (DoS protection)
+RATE_LIMIT_WINDOW_MS=10000
+RATE_LIMIT_MAX_REQUESTS_PER_IP=120
+RATE_LIMIT_MAX_REQUESTS_PER_CLIENT=60
+RATE_LIMIT_MAX_WS_UPGRADES_PER_IP=40
+RATE_LIMIT_MAX_WS_MESSAGES_PER_CLIENT=100
 ```
 
 ### Default Configuration

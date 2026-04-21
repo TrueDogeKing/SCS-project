@@ -3,7 +3,7 @@
  * Maintains active connections and broadcasts messages instantly
  */
 
-import { logInfo, logSuccess, logError, logWarn } from "../logInfo/index.js";
+import { logInfo, logSuccess, logError, logWarn } from "../logInfo/logger.js";
 import { ClientConnection } from "../types/types";
 
 const activeConnections = new Map<string, ClientConnection>();

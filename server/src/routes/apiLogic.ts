@@ -4,7 +4,7 @@
  * Message handling is now done via WebSocket only
  */
 
-import { logInfo, logWarn, logError, logSuccess } from "../logInfo/index.js";
+import { logInfo, logWarn, logError, logSuccess } from "../logInfo/logger.js";
 import { ServiceRequestBody, VerifyRequestBody } from "../types/types.js";
 import {
   verifyClientCertificate,
@@ -17,6 +17,7 @@ import { createSession } from "../session/index.js";
 import { decryptWithRSAPrivateKeyAsString } from "../crypto/index.js";
 import { getServerPrivateKey } from "../keys.js";
 import { MAX_POST_BODY_BYTES, parseJsonBodyWithLimit } from "../limits.js";
+import { checkHttpRateLimit, makeRateLimitResponse } from "../rateLimit.js";
 
 // Re-export message handlers
 export { handleSendMessage, handleReceiveMessage, handleSendToClient, processIncomingMessage } from "./messages.js";
@@ -34,6 +35,13 @@ export async function handleServiceRequest(request: Request): Promise<Response> 
 
     const body = bodyResult.body;
     const { clientId, serviceType, clientCertificate } = body;
+
+    if (clientId) {
+      const rateLimit = checkHttpRateLimit(request, "service-request", clientId);
+      if (!rateLimit.allowed) {
+        return makeRateLimitResponse(rateLimit.retryAfterSeconds, "Too many service requests.");
+      }
+    }
 
     // Validate request
     if (!clientId || !serviceType) {
@@ -144,6 +152,13 @@ export async function handleVerifyClient(request: Request): Promise<Response> {
 
     const body = bodyResult.body;
     const { clientId, clientCertificate, serverId, ttpUrl } = body;
+
+    if (clientId) {
+      const rateLimit = checkHttpRateLimit(request, "verify-client", clientId);
+      if (!rateLimit.allowed) {
+        return makeRateLimitResponse(rateLimit.retryAfterSeconds, "Too many verification requests.");
+      }
+    }
 
     // Validate request
     if (!clientId) {

@@ -1,12 +1,12 @@
 import { createRegistry } from "./registry";
-import { logInfo } from "./logInfo";
+import { logInfo } from "./logInfo/logger";
 import {
   handleRegister,
   handleAuthenticate,
   handleAuthenticateServer,
   handleValidateCertificate,
   handleSessionKey,
-} from "./routes";
+} from "./routes/apiRoutes";
 
 const PORT = 3002;
 

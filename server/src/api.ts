@@ -3,10 +3,17 @@
  * Provides service to authenticated clients
  */
 
-import { logInfo, logSuccess, logError, logWarn } from "./logInfo/index.js";
-import { handleServiceRequest, handleVerifyClient, processIncomingMessage } from "./routes/index.js";
+import { logInfo, logSuccess, logError, logWarn } from "./logInfo/logger.js";
+import { handleServiceRequest, handleVerifyClient, processIncomingMessage } from "./routes/apiLogic.js";
 import { getServerPublicKey } from "./keys.js";
 import { MAX_POST_BODY_BYTES, MAX_WEBSOCKET_MESSAGE_BYTES, getContentLength } from "./limits.js";
+import {
+  checkHttpRateLimit,
+  checkWsMessageRateLimit,
+  checkWsUpgradeRateLimit,
+  getRequestIp,
+  makeRateLimitResponse,
+} from "./rateLimit.js";
 
 import { registerServerWithTTP } from "./registerWithTTP.js";
 import { addConnection, removeConnection, broadcastMessage } from "./websocket/websocket.js";
@@ -81,6 +88,19 @@ const server = Bun.serve({
       try {
         const clientId = ws.data?.clientId;
         const serverId = ws.data?.serverId;
+        const clientIp = ws.data?.ip || "unknown-ip";
+
+        if (clientId) {
+          const wsRateLimit = checkWsMessageRateLimit(clientIp, clientId);
+          if (!wsRateLimit.allowed) {
+            logWarn("REQUEST_INVALID", {
+              clientId,
+              message: `WebSocket message rate limit exceeded for ${clientIp}`,
+            });
+            ws.close(1013, "Rate limit exceeded");
+            return;
+          }
+        }
 
         const messageBytes =
           typeof message === "string"
@@ -149,7 +169,16 @@ const server = Bun.serve({
     if (url.pathname === "/ws") {
       const clientId = url.searchParams.get("clientId");
       const serverId = url.searchParams.get("serverId");
-      if (server.upgrade(request, { data: { clientId, serverId } } as any)) {
+      const clientIp = getRequestIp(request);
+      const upgradeRateLimit = checkWsUpgradeRateLimit(clientIp, clientId || undefined);
+      if (!upgradeRateLimit.allowed) {
+        return makeRateLimitResponse(
+          upgradeRateLimit.retryAfterSeconds,
+          "Too many WebSocket connection attempts.",
+        );
+      }
+
+      if (server.upgrade(request, { data: { clientId, serverId, ip: clientIp } } as any)) {
         return;
       }
     }
@@ -160,6 +189,13 @@ const server = Bun.serve({
     }
 
     if (request.method === "POST") {
+      const ipRateLimit = checkHttpRateLimit(request, "post-edge");
+      if (!ipRateLimit.allowed) {
+        return addCorsHeaders(
+          makeRateLimitResponse(ipRateLimit.retryAfterSeconds, "Too many requests from this IP."),
+        );
+      }
+
       const contentLength = getContentLength(request);
       if (contentLength !== null && contentLength > MAX_POST_BODY_BYTES) {
         return new Response(
