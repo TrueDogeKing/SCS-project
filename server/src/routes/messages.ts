@@ -8,12 +8,21 @@ import { getSession, createSession, updateSessionActivity } from "../session/ind
 import { decryptMessage, encryptMessage, isValidEncryptedMessage } from "../session/messaging.js";
 import { EncryptedMessage, DecryptedMessage } from "../session/types.js";
 import { broadcastMessage } from "../websocket/websocket.js";
+import {
+  MAX_ENCRYPTED_CIPHERTEXT_CHARS,
+  MAX_POST_BODY_BYTES,
+  parseJsonBodyWithLimit,
+} from "../limits.js";
 
 const SERVER_ID = "server_001";
 
 // In-memory message queue (in production, use a database)
 // Key: "clientId:serverId" -> array of messages
 const messageQueue = new Map<string, EncryptedMessage[]>();
+
+function isEncryptedMessageTooLarge(encryptedMessage: EncryptedMessage): boolean {
+  return encryptedMessage.ciphertext.length > MAX_ENCRYPTED_CIPHERTEXT_CHARS;
+}
 
 export async function processIncomingMessage(
   clientId: string,
@@ -27,6 +36,15 @@ export async function processIncomingMessage(
       message: "Invalid encrypted message format",
     });
     return { success: false, error: "Invalid encrypted message format" };
+  }
+
+  if (isEncryptedMessageTooLarge(encryptedMessage)) {
+    logWarn("REQUEST_INVALID", {
+      clientId,
+      message: "Encrypted message exceeds maximum allowed size",
+      details: { maxCiphertextChars: MAX_ENCRYPTED_CIPHERTEXT_CHARS },
+    });
+    return { success: false, error: "Encrypted message too large" };
   }
 
   logInfo("MESSAGE_RECEIVED", {
@@ -109,7 +127,12 @@ export async function processIncomingMessage(
  */
 export async function handleSendMessage(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as SendMessageBody;
+    const bodyResult = await parseJsonBodyWithLimit<SendMessageBody>(request, MAX_POST_BODY_BYTES);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const body = bodyResult.body;
     const { clientId, serverId, encryptedMessage, sessionKey } = body;
 
     // Validate request
@@ -181,7 +204,12 @@ export async function handleSendMessage(request: Request): Promise<Response> {
  */
 export async function handleReceiveMessage(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as ReceiveMessageBody;
+    const bodyResult = await parseJsonBodyWithLimit<ReceiveMessageBody>(request, MAX_POST_BODY_BYTES);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const body = bodyResult.body;
     const { clientId, serverId } = body;
 
     // Validate request
@@ -273,7 +301,12 @@ export async function handleReceiveMessage(request: Request): Promise<Response> 
  */
 export async function handleSendToClient(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as SendMessageBody;
+    const bodyResult = await parseJsonBodyWithLimit<SendMessageBody>(request, MAX_POST_BODY_BYTES);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const body = bodyResult.body;
     const { clientId, serverId, encryptedMessage, sessionKey } = body;
 
     // Validate request
@@ -302,6 +335,21 @@ export async function handleSendToClient(request: Request): Promise<Response> {
           error: "Invalid encrypted message format",
         }),
         { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (isEncryptedMessageTooLarge(encryptedMessage)) {
+      logWarn("REQUEST_INVALID", {
+        message: "Encrypted message exceeds maximum allowed size",
+        details: { maxCiphertextChars: MAX_ENCRYPTED_CIPHERTEXT_CHARS },
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Encrypted message too large",
+        }),
+        { status: 413, headers: { "Content-Type": "application/json" } }
       );
     }
 

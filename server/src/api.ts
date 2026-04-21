@@ -3,9 +3,10 @@
  * Provides service to authenticated clients
  */
 
-import { logInfo, logSuccess, logError } from "./logInfo/index.js";
+import { logInfo, logSuccess, logError, logWarn } from "./logInfo/index.js";
 import { handleServiceRequest, handleVerifyClient, processIncomingMessage } from "./routes/index.js";
 import { getServerPublicKey } from "./keys.js";
+import { MAX_POST_BODY_BYTES, MAX_WEBSOCKET_MESSAGE_BYTES, getContentLength } from "./limits.js";
 
 import { registerServerWithTTP } from "./registerWithTTP.js";
 import { addConnection, removeConnection, broadcastMessage } from "./websocket/websocket.js";
@@ -81,6 +82,20 @@ const server = Bun.serve({
         const clientId = ws.data?.clientId;
         const serverId = ws.data?.serverId;
 
+        const messageBytes =
+          typeof message === "string"
+            ? new TextEncoder().encode(message).length
+            : message.byteLength;
+
+        if (messageBytes > MAX_WEBSOCKET_MESSAGE_BYTES) {
+          logWarn("REQUEST_INVALID", {
+            clientId,
+            message: `WebSocket payload too large (${messageBytes} bytes)`,
+          });
+          ws.close(1009, "Message too large");
+          return;
+        }
+
         if (typeof message === "string" && clientId && serverId) {
           const data = JSON.parse(message);
           
@@ -142,6 +157,22 @@ const server = Bun.serve({
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
+    if (request.method === "POST") {
+      const contentLength = getContentLength(request);
+      if (contentLength !== null && contentLength > MAX_POST_BODY_BYTES) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Payload too large. Maximum allowed is ${MAX_POST_BODY_BYTES} bytes.`,
+          }),
+          {
+            status: 413,
+            headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+          },
+        );
+      }
     }
 
     // GET / - Health check

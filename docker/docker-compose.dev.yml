@@ -37,4 +37,6 @@ services:
     volumes:
       - ../client/src:/app/client/src
       - ../client/public:/app/client/public
-    command: [ "bun", "run", "--cwd", "./client", "dev", "--", "--host" ]
+      - ../client/package.json:/app/client/package.json
+      - ../client/bun.lock:/app/client/bun.lock
+    command: [ "sh", "-lc", "cd /app/client && bun install && bun dev --host" ]

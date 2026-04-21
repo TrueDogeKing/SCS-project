@@ -4,7 +4,8 @@
   "description": "SCS Project root",
   "type": "module",
   "scripts": {
-    "dev": "docker compose -f docker/docker-compose.dev.yml up",
+    "dev": "docker compose -f docker/docker-compose.dev.yml up --build",
+    "dev:up": "docker compose -f docker/docker-compose.dev.yml up",
     "dev:down": "docker compose -f docker/docker-compose.dev.yml down",
     "server": "docker compose -f docker/docker-compose.server.yml up",
     "ttp": "docker compose -f docker/docker-compose.ttp.yml up",

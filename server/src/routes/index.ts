@@ -16,6 +16,7 @@ import {
 import { createSession } from "../session/index.js";
 import { decryptWithRSAPrivateKeyAsString } from "../crypto/index.js";
 import { getServerPrivateKey } from "../keys.js";
+import { MAX_POST_BODY_BYTES, parseJsonBodyWithLimit } from "../limits.js";
 
 // Re-export message handlers
 export { handleSendMessage, handleReceiveMessage, handleSendToClient, processIncomingMessage } from "./messages.js";
@@ -26,7 +27,12 @@ export { handleSendMessage, handleReceiveMessage, handleSendToClient, processInc
  */
 export async function handleServiceRequest(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as ServiceRequestBody;
+    const bodyResult = await parseJsonBodyWithLimit<ServiceRequestBody>(request, MAX_POST_BODY_BYTES);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const body = bodyResult.body;
     const { clientId, serviceType, clientCertificate } = body;
 
     // Validate request
@@ -129,7 +135,14 @@ export async function handleServiceRequest(request: Request): Promise<Response> 
  */
 export async function handleVerifyClient(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as VerifyRequestBody & { serverId?: string; ttpUrl?: string };
+    const bodyResult = await parseJsonBodyWithLimit<
+      VerifyRequestBody & { serverId?: string; ttpUrl?: string }
+    >(request, MAX_POST_BODY_BYTES);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const body = bodyResult.body;
     const { clientId, clientCertificate, serverId, ttpUrl } = body;
 
     // Validate request
