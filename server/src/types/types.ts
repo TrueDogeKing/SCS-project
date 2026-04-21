@@ -55,3 +55,13 @@ export interface ReceiveMessageResponse {
   error?: string;
 }
 
+// websocket types
+
+export interface ClientConnection {
+  clientId: string;
+  serverId: string;
+  ws: any; // ServerWebSocket type from Bun
+  sessionId?: string;
+  connectedAt: Date;
+}
+

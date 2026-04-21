@@ -8,7 +8,7 @@ import { handleServiceRequest, handleVerifyClient, processIncomingMessage } from
 import { getServerPublicKey } from "./keys.js";
 
 import { registerServerWithTTP } from "./registerWithTTP.js";
-import { addConnection, removeConnection, broadcastMessage } from "./websocket/index.js";
+import { addConnection, removeConnection, broadcastMessage } from "./websocket/websocket.js";
 
 const PORT = 3001;
 

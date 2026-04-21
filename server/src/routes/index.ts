@@ -5,7 +5,7 @@
  */
 
 import { logInfo, logWarn, logError, logSuccess } from "../logInfo/index.js";
-import { ServiceRequestBody, VerifyRequestBody } from "./types.js";
+import { ServiceRequestBody, VerifyRequestBody } from "../types/types.js";
 import {
   verifyClientCertificate,
   authorizeServiceAccess,

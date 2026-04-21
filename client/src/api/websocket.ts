@@ -1,29 +1,11 @@
-export interface WebSocketMessage {
-  type: string;
-  data?: unknown;
-  timestamp?: string;
-}
-
-export interface EncryptedMessagePayload {
-  encryptedMessage: any;
-}
-
-export interface WebSocketConfig {
-  serverUrl: string;
-  clientId: string;
-  serverId: string;
-  onMessage: (message: WebSocketMessage) => void;
-  onConnect: () => void;
-  onDisconnect: () => void;
-  onError: (error: string) => void;
-}
+import type { WebSocketConfig, WebSocketMessage } from "../types/websocket";
 
 export class WebSocketClient {
   private ws: WebSocket | null = null;
   private config: WebSocketConfig;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
-  private reconnectDelay = 2000; // 2 seconds
+  private reconnectDelay = 2000;
   private reconnectTimeout: number | null = null;
 
   constructor(config: WebSocketConfig) {

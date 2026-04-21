@@ -4,14 +4,7 @@
  */
 
 import { logInfo, logSuccess, logError, logWarn } from "../logInfo/index.js";
-
-interface ClientConnection {
-  clientId: string;
-  serverId: string;
-  ws: any; // ServerWebSocket type from Bun
-  sessionId?: string;
-  connectedAt: Date;
-}
+import { ClientConnection } from "../types/types";
 
 const activeConnections = new Map<string, ClientConnection>();
 

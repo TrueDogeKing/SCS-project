@@ -1,10 +1,9 @@
+import type { Config, RegisterResponse, VerifyClientResponse } from "../types/response";
+
 const DEFAULT_SERVER_URL = "http://localhost:3001";
 const DEFAULT_TTP_URL = "http://localhost:3002";
 
-export interface Config {
-  serverUrl: string;
-  ttpUrl: string;
-}
+
 
 export function getConfig(): Config {
   return {
@@ -19,18 +18,6 @@ export function saveConfig(config: Config) {
 }
 
 // --- TTP Endpoints ---
-
-export interface RegisterResponse {
-  success: boolean;
-  entityId: string;
-  certificate: {
-    pem: string;
-    fingerprint: string;
-    validFrom: string;
-    validUntil: string;
-  };
-  error?: string;
-}
 
 export async function registerWithTTP(
   ttpUrl: string,
@@ -48,15 +35,6 @@ export async function registerWithTTP(
 }
 
 // --- Server Endpoints ---
-
-export interface VerifyClientResponse {
-  success: boolean;
-  verified?: boolean;
-  clientId?: string;
-  sessionKey?: string;
-  clientSessionKey?: string;
-  error?: string;
-}
 
 export async function verifyClient(
   serverUrl: string,

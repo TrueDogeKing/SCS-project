@@ -3,11 +3,11 @@
  */
 
 import { logInfo, logWarn, logError, logSuccess } from "../logInfo/index.js";
-import { SendMessageBody, ReceiveMessageBody, SendMessageResponse, ReceiveMessageResponse } from "./types.js";
+import { SendMessageBody, ReceiveMessageBody, SendMessageResponse, ReceiveMessageResponse } from "../types/types.js";
 import { getSession, createSession, updateSessionActivity } from "../session/index.js";
 import { decryptMessage, encryptMessage, isValidEncryptedMessage } from "../session/messaging.js";
 import { EncryptedMessage, DecryptedMessage } from "../session/types.js";
-import { broadcastMessage } from "../websocket/index.js";
+import { broadcastMessage } from "../websocket/websocket.js";
 
 const SERVER_ID = "server_001";
 
